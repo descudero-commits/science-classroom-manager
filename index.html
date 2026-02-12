@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher LMS - Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',   /* Azul Principal */
+                        secondary: '#10B981', /* Verde Acción */
+                        danger: '#EF4444',    /* Rojo Error */
+                        warning: '#F59E0B',   /* Amarillo Alerta */
+                        dark: '#1F2937',      /* Gris Oscuro Fondo */
+                        darker: '#111827'     /* Negro Fondo */
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        /* Tipografía y Scroll suave */
+        body { font-family: 'Segoe UI', system-ui, sans-serif; transition: background-color 0.3s, color 0.3s; }
+        
+        /* Scrollbar moderno */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #4B5563; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+        /* Efectos de Tarjetas */
+        .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+
+        /* Estado Seleccionado (Modo Clase) */
+        .student-card { border: 2px solid transparent; transition: all 0.2s ease; user-select: none; }
+        .student-card.selected { border-color: #3B82F6; background-color: #EFF6FF; transform: scale(1.02); }
+        .dark .student-card.selected { background-color: #1E3A8A; border-color: #60A5FA; }
+
+        /* Animaciones */
+        .loader { border-top-color: #3B82F6; animation: spinner 1.0s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3) translateY(20px); }
+            50% { opacity: 1; transform: scale(1.05); }
+            100% { transform: scale(1); translateY(0); }
+        }
+        .animate-bounce-in { animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-darker text-gray-800 dark:text-gray-200 h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-white dark:bg-dark border-r border-gray-200 dark:border-gray-700 flex flex-col shadow-lg hidden md:flex z-20">
+        <div class="p-6 flex items-center justify-center border-b border-gray-200 dark:border-gray-700">
+            <i class="fa-solid fa-graduation-cap text-3xl text-primary mr-2"></i>
+            <h1 class="text-xl font-bold tracking-wider">TEACHER<span class="text-primary">APP</span></h1>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <a href="#" onclick="app.navigate('dashboard')" id="nav-dashboard" class="nav-item flex items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <i class="fa-solid fa-chart-pie w-6"></i> <span>Dashboard</span>
+            </a>
+            
+            <div class="pt-4 pb-1 px-3 text-xs font-semibold text-gray-400 uppercase">Gestión</div>
+            <a href="#" onclick="app.navigate('students')" id="nav-students" class="nav-item flex items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <i class="fa-solid fa-users w-6"></i> <span>Alumnos</span>
+            </a>
+            <a href="#" onclick="app.navigate('planner')" id="nav-planner" class="nav-item flex items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <i class="fa-solid fa-calendar-days w-6"></i> <span>Planificación</span>
+            </a>
+            <a href="#" onclick="app.navigate('gradebook')" id="nav-gradebook" class="nav-item flex items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <i class="fa-solid fa-table w-6"></i> <span>Gradebook (Notas)</span>
+            </a>
+
+            <div class="pt-4 pb-1 px-3 text-xs font-semibold text-gray-400 uppercase">Sistema</div>
+            <a href="#" onclick="app.exportData()" class="nav-item flex items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-green-600">
+                <i class="fa-solid fa-file-excel w-6"></i> <span>Exportar Excel</span>
+            </a>
+            <a href="#" onclick="app.navigate('settings')" id="nav-settings" class="nav-item flex items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <i class="fa-solid fa-gear w-6"></i> <span>Configuración</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <header class="h-16 bg-white dark:bg-dark border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 shadow-sm z-10">
+            <div class="flex items-center">
+                <button class="md:hidden mr-4" onclick="document.querySelector('aside').classList.toggle('hidden')">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <h2 id="page-title" class="text-xl font-semibold">Dashboard</h2>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button onclick="app.toggleTheme()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                    <i id="theme-icon" class="fa-solid fa-moon"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold shadow-sm" id="header-avatar">P</div>
+                    <span id="header-name" class="hidden md:block font-medium">Profesor</span>
+                </div>
+            </div>
+        </header>
+
+        <div id="content-area" class="flex-1 overflow-auto p-6 bg-gray-50 dark:bg-darker relative">
+            <div id="loader" class="absolute inset-0 flex flex-col items-center justify-center bg-white/90 dark:bg-dark/90 z-50 hidden backdrop-blur-sm">
+                <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+                <p class="text-gray-500 animate-pulse font-medium">Sincronizando nube...</p>
+            </div>
+            
+            <div id="view-container" class="max-w-7xl mx-auto pb-20">
+                </div>
+        </div>
+    </main>
+
+    <script>
+        // ==========================================
+        //  CONFIGURACIÓN (¡IMPORTANTE!)
+        // ==========================================
+        const PANTRY_ID = 'PON_AQUI_TU_ID_REAL'; // <--- PEGA TU ID AQUÍ
+        const BASKET_NAME = 'teacher_app_complete_v1';
+        
+        const App = {
+            data: {
+                db: null,
+                currentView: 'dashboard',
+                selectedStudents: [], 
+                currentClassId: null
+            },
+
+            // --- INICIO ---
+            init: async function() {
+                this.applyTheme();
+                if(PANTRY_ID === 'PON_AQUI_TU_ID_REAL' || PANTRY_ID === '') {
+                    Swal.fire('Falta Configuración', 'Abre el archivo index.html y pon tu Pantry ID en la línea 135', 'warning');
+                    return;
+                }
+                await this.loadData();
+                this.navigate('dashboard');
+            },
+
+            // --- CONEXIÓN PANTRY ---
+            loadData: async function() {
+                this.toggleLoader(true);
+                try {
+                    const response = await fetch(`https://getpantry.cloud/apiv1/pantry/${PANTRY_ID}/basket/${BASKET_NAME}`);
+                    if (!response.ok) {
+                        console.log("Creando base de datos inicial...");
+                        this.data.db = this.getInitialSchema();
+                        await this.saveData(true);
+                    } else {
+                        this.data.db = await response.json();
+                    }
+                    this.updateHeaderUI();
+                } catch (e) {
+                    Swal.fire('Error de Conexión', 'No se pudo conectar a Pantry Cloud.', 'error');
+                } finally {
+                    this.toggleLoader(false);
+                }
+            },
+
+            saveData: async function(silent = false) {
+                if(!silent) this.toggleLoader(true);
+                try {
+                    await fetch(`https://getpantry.cloud/apiv1/pantry/${PANTRY_ID}/basket/${BASKET_NAME}`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(this.data.db)
+                    });
+                    if(!silent) Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'Guardado', showConfirmButton: false, timer: 1500});
+                } catch (e) {
+                    Swal.fire('Error Guardando', 'Revisa tu conexión a internet.', 'error');
+                } finally {
+                    if(!silent) this.toggleLoader(false);
+                }
+            },
+
+            getInitialSchema: function() {
+                return {
+                    config: { profesor: "Mi Profe", lang: "es" },
+                    materias: [
+                        { id: "mat1", name: "Matemáticas", color: "bg-blue-500" },
+                        { id: "cie1", name: "Ciencias", color: "bg-green-500" },
+                        { id: "his1", name: "Historia", color: "bg-yellow-500" }
+                    ],
+                    alumnos: [],
+                    planificacion: [],
+                    recompensas_log: [],
+                    anecdotario: [],
+                    notas_config: [], 
+                    notas_data: []    
+                };
+            },
+
+            // --- NAVEGACIÓN ---
+            navigate: function(view, param = null) {
+                this.data.currentView = view;
+                this.data.selectedStudents = [];
+                
+                // Actualizar menú
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('bg-blue-50', 'dark:bg-gray-800', 'text-primary'));
+                const navItem = document.getElementById(`nav-${view}`);
+                if(navItem) navItem.classList.add('bg-blue-50', 'dark:bg-gray-800', 'text-primary');
+
+                const container = document.getElementById('view-container');
+                const title = document.getElementById('page-title');
+
+                // Router simple
+                switch(view) {
+                    case 'dashboard':
+                        title.innerText = 'Dashboard';
+                        this.renderDashboard(container);
+                        break;
+                    case 'students':
+                        title.innerText = 'Gestión de Alumnos';
+                        this.renderStudents(container);
+                        break;
+                    case 'planner':
+                        title.innerText = 'Planificación';
+                        this.renderPlanner(container);
+                        break;
+                    case 'gradebook':
+                        title.innerText = 'Gradebook';
+                        this.renderGradebook(container); // Pendiente implementación visual simple
+                        break;
+                    case 'classMode':
+                        this.data.currentClassId = param;
+                        const materia = this.data.db.materias.find(m => m.id === param);
+                        title.innerText = `Clase: ${materia.name}`;
+                        this.renderClassMode(container, materia);
+                        break;
+                    case 'settings':
+                        title.innerText = 'Configuración';
+                        this.renderSettings(container);
+                        break;
+                }
+            },
+
+            // --- VISTAS ---
+            renderDashboard: function(container) {
+                let html = `<div class="grid grid-cols-1 md:grid-cols-3 gap-6">`;
+                this.data.db.materias.forEach(m => {
+                    const count = this.data.db.alumnos.filter(a => a.materiaId === m.id).length;
+                    html += `
+                        <div onclick="app.navigate('classMode', '${m.id}')" class="bg-white dark:bg-dark rounded-xl shadow p-6 card-hover cursor-pointer relative overflow-hidden group">
+                            <div class="absolute top-0 right-0 w-24 h-24 transform translate-x-8 -translate-y-8 rounded-full ${m.color} opacity-20 group-hover:opacity-30 transition"></div>
+                            <h3 class="text-xl font-bold mb-1">${m.name}</h3>
+                            <p class="text-gray-500 text-sm mb-4">${count} Alumnos</p>
+                            <div class="flex justify-between items-center mt-4">
+                                <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">Entrar a Clase</span>
+                                <i class="fa-solid fa-arrow-right text-primary"></i>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>
+                <div class="mt-8">
+                    <h3 class="font-bold text-lg mb-4">Próximos Eventos</h3>
+                    <div class="bg-white dark:bg-dark rounded-xl shadow p-4">
+                        ${this.data.db.planificacion.length === 0 ? '<p class="text-gray-400">No hay eventos planeados.</p>' : ''}
+                        <ul class="space-y-3">
+                            ${this.data.db.planificacion.slice(0, 5).map(p => `
+                                <li class="flex items-center border-l-4 border-primary pl-3">
+                                    <div class="flex-1">
+                                        <div class="font-bold text-sm">${p.tema} <span class="text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded ml-2">${p.tipo}</span></div>
+                                        <div class="text-xs text-gray-500">${p.fecha}</div>
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                </div>`;
+                container.innerHTML = html;
+            },
+
+            renderStudents: function(container) {
+                container.innerHTML = `
+                    <div class="bg-white dark:bg-dark rounded-xl shadow p-6">
+                        <div class="flex justify-between mb-4">
+                            <h3 class="font-bold">Lista de Alumnos</h3>
+                            <button onclick="app.modalAddStudent()" class="bg-primary text-white px-4 py-2 rounded hover:bg-blue-600 transition shadow"><i class="fa-solid fa-plus"></i> Nuevo Alumno</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-gray-50 dark:bg-gray-700 uppercase text-xs">
+                                    <tr>
+                                        <th class="p-3">Nombre</th>
+                                        <th class="p-3">Materia</th>
+                                        <th class="p-3 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                    ${this.data.db.alumnos.map(a => {
+                                        const matName = this.data.db.materias.find(m => m.id === a.materiaId)?.name || 'N/A';
+                                        return `
+                                        <tr>
+                                            <td class="p-3 font-medium">${a.nombre}</td>
+                                            <td class="p-3"><span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">${matName}</span></td>
+                                            <td class="p-3 text-right">
+                                                <button onclick="app.deleteStudent('${a.id}')" class="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded dark:bg-transparent"><i class="fa-solid fa-trash"></i></button>
+                                            </td>
+                                        </tr>`;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderPlanner: function(container) {
+                container.innerHTML = `
+                    <div class="bg-white dark:bg-dark rounded-xl shadow p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold">Calendario de Actividades</h3>
+                            <button onclick="app.modalAddPlan()" class="bg-secondary text-white px-4 py-2 rounded hover:bg-green-600 shadow"><i class="fa-solid fa-plus"></i> Agregar Evento</button>
+                        </div>
+                        <div class="grid gap-3">
+                            ${this.data.db.planificacion.length === 0 ? '<p class="text-gray-400 text-center py-4">Sin planificación</p>' : ''}
+                            ${this.data.db.planificacion.sort((a,b) => new Date(a.fecha) - new Date(b.fecha)).map(p => `
+                                <div class="border dark:border-gray-700 rounded-lg p-4 flex justify-between items-center bg-gray-50 dark:bg-gray-800">
+                                    <div>
+                                        <div class="font-bold text-lg">${p.tema}</div>
+                                        <div class="text-sm text-gray-500 flex items-center gap-2">
+                                            <span><i class="fa-regular fa-calendar"></i> ${p.fecha}</span>
+                                            <span class="bg-gray-200 dark:bg-gray-700 px-2 rounded text-xs uppercase font-bold">${p.tipo}</span>
+                                            ${p.gradeColumnId ? '<span class="text-green-500 text-xs flex items-center"><i class="fa-solid fa-check-circle mr-1"></i> Calificable</span>' : ''}
+                                        </div>
+                                    </div>
+                                    <button onclick="app.deletePlan('${p.id}')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-times"></i></button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderClassMode: function(container, materia) {
+                const alumnosClase = this.data.db.alumnos.filter(a => a.materiaId === materia.id);
+                
+                const selectionBar = this.data.selectedStudents.length > 0 ? `
+                    <div class="fixed bottom-6 right-6 flex flex-col gap-2 z-40 animate-bounce-in">
+                        <button onclick="app.modalGivePoints(true)" class="bg-primary text-white w-16 h-16 rounded-full shadow-lg hover:bg-blue-600 transition flex items-center justify-center">
+                            <i class="fa-solid fa-star text-2xl"></i>
+                        </button>
+                        <span class="text-xs bg-dark text-white px-2 py-1 rounded text-center shadow">Dar Puntos (${this.data.selectedStudents.length})</span>
+                    </div>
+                ` : '';
+
+                container.innerHTML = `
+                    <div class="flex flex-col md:flex-row gap-6 h-full">
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold">Clase Activa: ${materia.name}</h3>
+                                <div class="text-sm text-gray-500">Selecciona para dar puntos</div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                ${alumnosClase.map(a => {
+                                    const isSelected = this.data.selectedStudents.includes(a.id);
+                                    const totalPoints = this.data.db.recompensas_log
+                                        .filter(log => log.alumnoIds.includes(a.id))
+                                        .reduce((sum, log) => sum + parseInt(log.puntos), 0);
+
+                                    return `
+                                    <div onclick="app.toggleStudentSelection('${a.id}')" 
+                                         class="student-card ${isSelected ? 'selected' : ''} bg-white dark:bg-dark p-4 rounded-xl shadow cursor-pointer relative">
+                                        <div class="flex justify-between items-start">
+                                            <div class="font-bold truncate w-full">${a.nombre}</div>
+                                            ${isSelected ? '<i class="fa-solid fa-circle-check text-primary"></i>' : ''}
+                                        </div>
+                                        <div class="mt-4 flex justify-between items-end">
+                                            <div class="text-2xl font-bold text-yellow-500"><i class="fa-solid fa-star text-sm mr-1"></i>${totalPoints}</div>
+                                            <button onclick="event.stopPropagation(); app.modalAnecdote('${a.id}', '${materia.id}')" class="text-gray-400 hover:text-gray-600 p-1">
+                                                <i class="fa-solid fa-book-open"></i>
+                                            </button>
+                                        </div>
+                                    </div>`;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <div class="w-full md:w-80 space-y-6">
+                            <div class="bg-white dark:bg-dark rounded-xl shadow p-4">
+                                <h4 class="font-bold border-b dark:border-gray-700 pb-2 mb-2 text-sm uppercase tracking-wide text-gray-400">Hoy</h4>
+                                ${this.getTodayPlan(materia.id)}
+                            </div>
+                            <div class="bg-white dark:bg-dark rounded-xl shadow p-4 h-80 overflow-y-auto">
+                                <h4 class="font-bold border-b dark:border-gray-700 pb-2 mb-2 text-sm uppercase tracking-wide text-gray-400">Historial</h4>
+                                <ul class="text-sm space-y-3">
+                                    ${this.getHistoryLog(materia.id)}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    ${selectionBar}
+                `;
+            },
+            
+            renderGradebook: function(container) {
+                // Versión simplificada para visualizar notas
+                const cols = this.data.db.notas_config;
+                if(cols.length === 0) {
+                    container.innerHTML = '<div class="p-10 text-center text-gray-500">No hay columnas de notas configuradas. Crea una desde "Planificación".</div>';
+                    return;
+                }
+                container.innerHTML = `<div class="p-10 text-center text-gray-500">Módulo de notas en construcción. Las columnas creadas son: ${cols.map(c=>c.nombre).join(', ')}</div>`;
+            },
+            
+            renderSettings: function(container) {
+                 container.innerHTML = `
+                    <div class="bg-white dark:bg-dark rounded-xl shadow p-6 max-w-lg mx-auto">
+                        <h3 class="font-bold mb-4">Configuración</h3>
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold mb-2">Nombre del Profesor</label>
+                            <input type="text" id="conf-name" class="w-full p-2 border rounded dark:bg-gray-800 dark:border-gray-600" value="${this.data.db.config.profesor}">
+                        </div>
+                        <button onclick="app.saveSettings()" class="bg-primary text-white px-4 py-2 rounded w-full">Guardar Cambios</button>
+                    </div>
+                `;
+            },
+
+            // --- LÓGICA DE NEGOCIO ---
+            saveSettings: function() {
+                const name = document.getElementById('conf-name').value;
+                this.data.db.config.profesor = name;
+                this.saveData();
+                this.updateHeaderUI();
+                Swal.fire('Guardado', 'Configuración actualizada', 'success');
+            },
+
+            modalAddStudent: async function() {
+                const { value: formValues } = await Swal.fire({
+                    title: 'Nuevo Alumno',
+                    html: `
+                        <input id="swal-input1" class="swal2-input" placeholder="Nombre Completo">
+                        <select id="swal-input2" class="swal2-input">
+                            ${this.data.db.materias.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
+                        </select>
+                    `,
+                    focusConfirm: false,
+                    preConfirm: () => [
+                        document.getElementById('swal-input1').value,
+                        document.getElementById('swal-input2').value
+                    ]
+                });
+
+                if (formValues && formValues[0]) {
+                    this.data.db.alumnos.push({
+                        id: 'alm-' + Date.now(),
+                        nombre: formValues[0],
+                        materiaId: formValues[1]
+                    });
+                    this.saveData();
+                    this.renderStudents(document.getElementById('view-container'));
+                }
+            },
+
+            deleteStudent: function(id) {
+                Swal.fire({
+                    title: '¿Eliminar alumno?',
+                    text: "No podrás deshacer esto.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, borrar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.data.db.alumnos = this.data.db.alumnos.filter(a => a.id !== id);
+                        this.saveData();
+                        this.renderStudents(document.getElementById('view-container'));
+                    }
+                });
+            },
+
+            modalAddPlan: async function() {
+                const { value: f } = await Swal.fire({
+                    title: 'Agregar al Plan',
+                    html: `
+                        <input id="plan-tema" class="swal2-input" placeholder="Tema / Actividad">
+                        <input id="plan-fecha" type="date" class="swal2-input">
+                        <select id="plan-tipo" class="swal2-select w-3/4 mx-auto block mt-4 p-2 border rounded">
+                            <option value="leccion">Lección</option>
+                            <option value="taller">Taller</option>
+                            <option value="examen">Examen</option>
+                        </select>
+                        <select id="plan-materia" class="swal2-select w-3/4 mx-auto block mt-2 p-2 border rounded">
+                             ${this.data.db.materias.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
+                        </select>
+                    `,
+                    preConfirm: () => ({
+                        tema: document.getElementById('plan-tema').value,
+                        fecha: document.getElementById('plan-fecha').value,
+                        tipo: document.getElementById('plan-tipo').value,
+                        materiaId: document.getElementById('plan-materia').value
+                    })
+                });
+
+                if (f && f.tema && f.fecha) {
+                    let gradeColumnId = null;
+                    if(f.tipo !== 'leccion') {
+                        const { isConfirmed } = await Swal.fire({
+                            title: '¿Es Calificable?',
+                            text: `¿Crear columna de notas para "${f.tema}"?`,
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonText: 'Sí, crear columna'
+                        });
+                        if(isConfirmed) {
+                            gradeColumnId = 'col-' + Date.now();
+                            this.data.db.notas_config.push({
+                                id: gradeColumnId, nombre: f.tema, materiaId: f.materiaId, maxPoints: 100
+                            });
+                        }
+                    }
+                    this.data.db.planificacion.push({ id: 'plan-' + Date.now(), ...f, gradeColumnId });
+                    this.saveData();
+                    this.renderPlanner(document.getElementById('view-container'));
+                }
+            },
+
+            deletePlan: function(id) {
+                this.data.db.planificacion = this.data.db.planificacion.filter(p => p.id !== id);
+                this.saveData();
+                this.renderPlanner(document.getElementById('view-container'));
+            },
+
+            toggleStudentSelection: function(sid) {
+                if(this.data.selectedStudents.includes(sid)) {
+                    this.data.selectedStudents = this.data.selectedStudents.filter(id => id !== sid);
+                } else {
+                    this.data.selectedStudents.push(sid);
+                }
+                const container = document.getElementById('view-container');
+                const materia = this.data.db.materias.find(m => m.id === this.data.currentClassId);
+                this.renderClassMode(container, materia);
+            },
+
+            modalGivePoints: async function(isBulk) {
+                const ids = isBulk ? this.data.selectedStudents : [];
+                const { value: f } = await Swal.fire({
+                    title: `Puntos para ${ids.length} alumnos`,
+                    html: `
+                        <input id="pt-motivo" class="swal2-input" placeholder="Motivo (ej: Participación)">
+                        <input id="pt-valor" type="number" class="swal2-input" placeholder="Puntos" value="1">
+                    `,
+                    preConfirm: () => ({
+                        motivo: document.getElementById('pt-motivo').value,
+                        puntos: parseInt(document.getElementById('pt-valor').value)
+                    })
+                });
+
+                if(f) {
+                    this.data.db.recompensas_log.push({
+                        id: 'rew-' + Date.now(),
+                        fecha: new Date().toISOString(),
+                        alumnoIds: ids,
+                        materiaId: this.data.currentClassId,
+                        motivo: f.motivo,
+                        puntos: f.puntos
+                    });
+                    this.data.selectedStudents = [];
+                    this.saveData();
+                    const container = document.getElementById('view-container');
+                    const materia = this.data.db.materias.find(m => m.id === this.data.currentClassId);
+                    this.renderClassMode(container, materia);
+                }
+            },
+
+            modalAnecdote: async function(studentId, materiaId) {
+                const student = this.data.db.alumnos.find(a => a.id === studentId);
+                const { value: f } = await Swal.fire({
+                    title: `Anécdota: ${student.nombre}`,
+                    html: `
+                        <input id="anec-titulo" class="swal2-input" placeholder="Título">
+                        <select id="anec-imp" class="swal2-select w-3/4 mx-auto block mt-4 p-2 border rounded">
+                            <option value="info">🟢 Info</option>
+                            <option value="atencion">🟡 Atención</option>
+                            <option value="critico">🔴 Crítico</option>
+                        </select>
+                        <textarea id="anec-desc" class="swal2-textarea" placeholder="Descripción..."></textarea>
+                    `,
+                    preConfirm: () => ({
+                        titulo: document.getElementById('anec-titulo').value,
+                        importancia: document.getElementById('anec-imp').value,
+                        descripcion: document.getElementById('anec-desc').value
+                    })
+                });
+
+                if(f) {
+                    this.data.db.anecdotario.push({
+                        id: 'anec-' + Date.now(),
+                        fecha: new Date().toISOString(),
+                        alumnoId: studentId,
+                        materiaId: materiaId,
+                        ...f
+                    });
+                    this.saveData();
+                    Swal.fire('Registrado', '', 'success');
+                }
+            },
+
+            // --- HELPERS ---
+            getTodayPlan: function(mId) {
+                const today = new Date().toISOString().split('T')[0];
+                const plan = this.data.db.planificacion.find(p => p.materiaId === mId && p.fecha === today);
+                if(!plan) return '<div class="text-gray-400 text-sm italic py-2">Nada hoy.</div>';
+                return `
+                    <div class="bg-blue-50 dark:bg-gray-700 p-3 rounded border-l-4 border-primary">
+                        <div class="font-bold text-primary dark:text-blue-300">${plan.tema}</div>
+                        <div class="text-xs uppercase mt-1 text-gray-500">${plan.tipo}</div>
+                    </div>
+                `;
+            },
+
+            getHistoryLog: function(mId) {
+                const logs = [
+                    ...this.data.db.recompensas_log.filter(r => r.materiaId === mId).map(r => ({...r, type: 'reward'})),
+                    ...this.data.db.anecdotario.filter(a => a.materiaId === mId).map(a => ({...a, type: 'anecdote'}))
+                ].sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 10);
+
+                if(logs.length === 0) return '<li class="text-gray-400 italic">Sin actividad reciente</li>';
+
+                return logs.map(item => {
+                    const date = new Date(item.fecha).toLocaleDateString();
+                    if(item.type === 'reward') {
+                        return `
+                        <li class="flex justify-between items-center text-xs border-b dark:border-gray-700 pb-2">
+                            <span><i class="fa-solid fa-star text-yellow-500 mr-1"></i> ${item.motivo} (${item.alumnoIds.length})</span>
+                            <span class="font-bold ${item.puntos > 0 ? 'text-green-500' : 'text-red-500'}">${item.puntos > 0 ? '+' : ''}${item.puntos}</span>
+                        </li>`;
+                    } else {
+                        const color = item.importancia === 'critico' ? 'text-red-500' : (item.importancia === 'atencion' ? 'text-yellow-500' : 'text-blue-500');
+                        return `
+                        <li class="flex justify-between items-center text-xs border-b dark:border-gray-700 pb-2">
+                            <span class="${color}"><i class="fa-solid fa-circle-exclamation mr-1"></i> ${item.titulo}</span>
+                            <span class="text-gray-400">${date}</span>
+                        </li>`;
+                    }
+                }).join('');
+            },
+
+            exportData: function() {
+                const wb = XLSX.utils.book_new();
+                const wsAlumnos = XLSX.utils.json_to_sheet(this.data.db.alumnos);
+                XLSX.utils.book_append_sheet(wb, wsAlumnos, "Alumnos");
+                const wsAnecdotas = XLSX.utils.json_to_sheet(this.data.db.anecdotario);
+                XLSX.utils.book_append_sheet(wb, wsAnecdotas, "Anecdotario");
+                XLSX.writeFile(wb, "TeacherApp_Backup.xlsx");
+            },
+
+            toggleTheme: function() {
+                const html = document.documentElement;
+                html.classList.toggle('dark');
+                localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+                this.updateHeaderUI();
+            },
+            
+            applyTheme: function() {
+                if(localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+            },
+
+            updateHeaderUI: function() {
+                const isDark = document.documentElement.classList.contains('dark');
+                const icon = document.getElementById('theme-icon');
+                icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+                if(this.data.db) {
+                    document.getElementById('header-name').innerText = this.data.db.config.profesor;
+                    document.getElementById('header-avatar').innerText = this.data.db.config.profesor.charAt(0);
+                }
+            },
+            
+            toggleLoader: function(show) {
+                const loader = document.getElementById('loader');
+                if(show) loader.classList.remove('hidden');
+                else loader.classList.add('hidden');
+            }
+        };
+
+        // ARRANCAR
+        document.addEventListener('DOMContentLoaded', () => App.init());
+    </script>
+</body>
+</html>
