@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher App 4.0 - Ultimate Edition</title>
+    <title>Teacher App 6.0 - Control Total</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,11 +15,7 @@
             theme: { 
                 extend: { 
                     colors: { 
-                        primary: '#2563EB', 
-                        secondary: '#10B981', 
-                        danger: '#EF4444',
-                        warning: '#F59E0B',
-                        dark: '#1F2937' 
+                        primary: '#2563EB', secondary: '#10B981', danger: '#EF4444', dark: '#1F2937' 
                     } 
                 } 
             }
@@ -27,624 +23,631 @@
     </script>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f3f4f6; }
-        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: all 0.2s; }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .blur-screen { filter: blur(10px); pointer-events: none; user-select: none; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-icon { transition: transform 0.1s; }
+        .btn-icon:active { transform: scale(0.95); }
+        /* Scrollbar fina */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden text-gray-800">
+<body class="h-screen flex overflow-hidden text-gray-800 bg-gray-100">
 
-    <div id="privacy-lock" class="fixed inset-0 z-50 bg-gray-900 flex flex-col items-center justify-center hidden text-white">
-        <i class="fa-solid fa-lock text-6xl mb-4 text-primary"></i>
-        <h2 class="text-2xl font-bold">App Bloqueada</h2>
-        <input type="password" id="unlock-pin" class="text-black text-center text-2xl p-2 rounded w-32 tracking-widest mt-4" maxlength="4">
-        <button onclick="app.unlockApp()" class="mt-4 bg-primary px-6 py-2 rounded hover:bg-blue-600">Desbloquear</button>
+    <div id="lock-screen" class="fixed inset-0 z-50 bg-gray-900 flex flex-col items-center justify-center hidden text-white">
+        <i class="fa-solid fa-lock text-5xl mb-4"></i>
+        <input type="password" id="pin-input" class="text-black text-center text-2xl p-2 rounded w-40 tracking-widest" maxlength="4" placeholder="PIN">
+        <button onclick="app.unlock()" class="mt-4 bg-primary px-6 py-2 rounded font-bold">Entrar</button>
     </div>
 
-    <aside class="w-20 md:w-64 bg-white border-r flex flex-col z-20 transition-all duration-300">
-        <div class="h-20 flex items-center justify-center border-b">
-            <div class="flex items-center gap-2 font-bold text-xl text-primary">
-                <i class="fa-solid fa-chalkboard-user text-2xl"></i>
-                <span class="hidden md:inline">TEACHER<span class="text-gray-800">APP v4</span></span>
-            </div>
+    <aside class="w-16 md:w-64 bg-white border-r flex flex-col z-20 transition-all duration-300">
+        <div class="h-16 flex items-center justify-center border-b text-primary font-bold text-xl">
+            <i class="fa-solid fa-graduation-cap md:mr-2"></i> <span class="hidden md:inline">TeacherApp v6</span>
         </div>
-        <nav class="flex-1 overflow-y-auto p-2 space-y-1" id="nav-menu">
-            </nav>
-        <div class="p-4 border-t bg-gray-50 cursor-pointer" onclick="app.nav('settings')">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg">T</div>
-                <div class="hidden md:block">
-                    <p class="text-sm font-bold truncate" id="profile-name">Profesor</p>
-                    <p class="text-xs text-green-500">● Online</p>
-                </div>
-            </div>
+        <nav class="flex-1 overflow-y-auto p-2 space-y-1" id="nav-menu"></nav>
+        <div class="p-3 border-t text-xs text-center text-gray-400">
+            <div id="sync-status">● Online</div>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col h-screen relative">
         <header class="h-16 bg-white border-b flex items-center justify-between px-6 shadow-sm z-10">
-            <h2 id="page-title" class="font-bold text-xl text-gray-700">Dashboard</h2>
-            <div class="flex gap-3">
-                <button onclick="app.togglePrivacy()" class="p-2 text-gray-500 hover:text-primary tooltip"><i class="fa-solid fa-lock"></i></button>
-                <button onclick="app.saveData()" class="p-2 text-gray-500 hover:text-green-500 tooltip"><i class="fa-solid fa-cloud"></i></button>
+            <h2 id="page-title" class="font-bold text-xl text-gray-700">Panel</h2>
+            <div class="flex gap-2">
+                <button onclick="app.lock()" class="p-2 text-gray-400 hover:text-primary"><i class="fa-solid fa-lock"></i></button>
+                <button onclick="app.sync()" class="p-2 text-gray-400 hover:text-green-500"><i class="fa-solid fa-cloud-arrow-up"></i></button>
             </div>
         </header>
 
-        <div id="view-container" class="flex-1 overflow-auto p-6 bg-gray-100 relative">
-            </div>
+        <div id="app-view" class="flex-1 overflow-auto p-4 md:p-6 relative"></div>
     </main>
 
     <script>
         // ==========================================
-        // 1. CONFIGURACIÓN (ID DE PANTRY)
+        // 1. CONFIGURACIÓN
         // ==========================================
         const CONFIG = {
-            pantryId: '9df76c09-c878-45e6-9df9-7b02d9cd00ef', // <--- CAMBIAR AQUÍ
-            basketName: 'TeacherAppV4'
+            pantryId: '9df76c09-c878-45e6-9df9-7b02d9cd00ef', // <--- IMPORTANTE: TU ID
+            basketName: 'TeacherAppV6_Final'
         };
 
-        // ==========================================
-        // 2. DICCIONARIO DE IDIOMAS
-        // ==========================================
-        const T = {
-            es: {
-                dash: 'Tablero', classes: 'Mis Clases', students: 'Alumnos', schedule: 'Horario',
-                planner: 'Planeación', grades: 'Notas', behavior: 'Anecdotario', settings: 'Ajustes',
-                welcome: 'Bienvenido', incidents: 'Incidencias', actions: 'Acciones Rápidas',
-                note: 'Nota', reward: 'Premiar', redeem: 'Canjear', bulk: 'Premiar Grupo',
-                save: 'Guardar', cancel: 'Cancelar', profile: 'Perfil', lang: 'Idioma'
-            },
-            en: {
-                dash: 'Dashboard', classes: 'My Classes', students: 'Students', schedule: 'Schedule',
-                planner: 'Planner', grades: 'Gradebook', behavior: 'Behavior', settings: 'Settings',
-                welcome: 'Welcome', incidents: 'Incidents', actions: 'Quick Actions',
-                note: 'Note', reward: 'Reward', redeem: 'Redeem', bulk: 'Bulk Reward',
-                save: 'Save', cancel: 'Cancel', profile: 'Profile', lang: 'Language'
+        const DB_TEMPLATE = {
+            settings: { pin: '1234', name: 'Profesor', school: 'Escuela' },
+            subjects: [],
+            students: [],
+            behavior: [],   // Anecdotario (Incidentes)
+            rewardsLog: [], // Historial de Puntos/Compras
+            planning: [],
+            config: {
+                points: [ // PRESETS EDITABLES
+                    { label: "Tarea", val: 10, icon: "📝" },
+                    { label: "Participación", val: 5, icon: "✋" },
+                    { label: "Buen Comp.", val: 15, icon: "⭐" }
+                ],
+                shop: [ // TIENDA EDITABLE
+                    { name: "Punto Extra", cost: 100, icon: "💯" },
+                    { name: "Dulce", cost: 50, icon: "🍬" }
+                ]
             }
         };
 
         // ==========================================
-        // 3. BASE DE DATOS INICIAL
-        // ==========================================
-        const DEFAULT_DB = {
-            settings: { lang: 'es', pin: '1234', name: 'Profesor', school: 'Mi Colegio' },
-            subjects: [],
-            students: [],
-            grades: [],
-            behavior: [],
-            rewardsLog: [],
-            rewardPresets: [
-                { label: "Tarea Completa", val: 10, icon: "📝" },
-                { label: "Participación", val: 5, icon: "✋" },
-                { label: "Ayudar a compañero", val: 15, icon: "🤝" }
-            ],
-            shopItems: [ // NUEVO: Artículos de la tienda
-                { id: 1, name: "Saltar Tarea", cost: 100, icon: "🚫" },
-                { id: 2, name: "Punto Extra", cost: 200, icon: "💯" },
-                { id: 3, name: "Cambiar Asiento", cost: 50, icon: "🪑" }
-            ],
-            planning: [],
-            schedule: { blocks: [] },
-            alerts: []
-        };
-
-        // ==========================================
-        // 4. LÓGICA DE LA APP
+        // 2. LÓGICA PRINCIPAL
         // ==========================================
         const App = {
             data: null,
-            currentView: 'dashboard',
-
-            // --- TRADUCCIÓN HELPER ---
-            t: function(key) {
-                const lang = this.data ? this.data.settings.lang : 'es';
-                return T[lang][key] || key;
-            },
-
-            // --- INICIO ---
+            
             init: async function() {
-                if(CONFIG.pantryId === 'PON_AQUI_TU_ID_REAL') {
-                    Swal.fire('Error', 'Falta el ID de Pantry en la línea 78.', 'error');
-                    return;
-                }
-                await this.loadData();
-                this.renderMenu();
+                if(CONFIG.pantryId.includes('REAL')) return Swal.fire('Error', 'Falta ID en línea 74', 'error');
+                await this.load();
+                this.renderNav();
                 this.nav('dashboard');
-                
-                // Listener PIN
-                document.getElementById('unlock-pin').addEventListener('keyup', (e) => {
-                    if(e.key === 'Enter') this.unlockApp();
-                });
+                // Enter en PIN
+                document.getElementById('pin-input').addEventListener('keyup', (e)=> e.key==='Enter' && this.unlock());
             },
 
-            // --- DATOS (NUBE) ---
-            loadData: async function() {
+            // --- NUBE ---
+            load: async function() {
+                Swal.showLoading();
                 try {
-                    Swal.fire({title: 'Cargando...', didOpen: () => Swal.showLoading()});
-                    const res = await fetch(`https://getpantry.cloud/apiv1/pantry/${CONFIG.pantryId}/basket/${CONFIG.basketName}`);
-                    if(res.ok) {
-                        this.data = await res.json();
-                        this.data = { ...DEFAULT_DB, ...this.data }; // Merge seguro
-                    } else {
-                        this.data = JSON.parse(JSON.stringify(DEFAULT_DB));
-                        await this.saveData(true);
-                    }
+                    const r = await fetch(`https://getpantry.cloud/apiv1/pantry/${CONFIG.pantryId}/basket/${CONFIG.basketName}`);
+                    if(r.ok) this.data = { ...DB_TEMPLATE, ...await r.json() };
+                    else { this.data = JSON.parse(JSON.stringify(DB_TEMPLATE)); await this.sync(true); }
                     Swal.close();
-                    this.updateProfileUI();
-                } catch (e) {
-                    Swal.fire('Offline', 'Error de conexión. Modo local activo.', 'warning');
-                    this.data = JSON.parse(JSON.stringify(DEFAULT_DB));
+                } catch(e) { 
+                    this.data = JSON.parse(JSON.stringify(DB_TEMPLATE)); 
+                    Swal.fire('Modo Offline', 'No se pudo conectar.', 'info'); 
                 }
             },
-
-            saveData: async function(silent = false) {
-                if(!silent) Swal.fire({title: 'Guardando...', didOpen: () => Swal.showLoading()});
+            sync: async function(silent=false) {
+                if(!silent) Swal.showLoading();
                 try {
                     await fetch(`https://getpantry.cloud/apiv1/pantry/${CONFIG.pantryId}/basket/${CONFIG.basketName}`, {
-                        method: 'POST', headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(this.data)
+                        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(this.data)
                     });
-                    if(!silent) Swal.fire({icon: 'success', title: 'Guardado', toast: true, position: 'top-end', timer: 1000, showConfirmButton: false});
-                } catch (e) {
-                    if(!silent) Swal.fire('Error', 'No se pudo guardar.', 'error');
-                }
+                    if(!silent) Swal.fire({icon:'success', title:'Guardado', toast:true, position:'top-end', timer:1000, showConfirmButton:false});
+                    document.getElementById('sync-status').innerText = '● Sincronizado ' + new Date().toLocaleTimeString();
+                } catch(e) { if(!silent) Swal.fire('Error', 'Fallo al guardar', 'error'); }
             },
 
             // --- NAVEGACIÓN ---
-            renderMenu: function() {
-                const menu = [
-                    { id: 'dashboard', icon: 'chart-pie', label: this.t('dash'), color: 'text-blue-500' },
-                    { id: 'classes', icon: 'chalkboard', label: this.t('classes'), color: 'text-indigo-600' },
-                    { id: 'schedule', icon: 'calendar-days', label: this.t('schedule'), color: 'text-purple-500' },
-                    { id: 'students', icon: 'users', label: this.t('students'), color: 'text-green-500' },
-                    { id: 'planner', icon: 'book-open', label: this.t('planner'), color: 'text-orange-500' },
-                    { id: 'grades', icon: 'graduation-cap', label: this.t('grades'), color: 'text-red-500' },
-                    { id: 'behavior', icon: 'eye', label: this.t('behavior'), color: 'text-yellow-500' },
-                    { id: 'settings', icon: 'gear', label: this.t('settings'), color: 'text-gray-500' }
+            renderNav: function() {
+                const opts = [
+                    {id:'dashboard', t:'Inicio', i:'home'},
+                    {id:'classes', t:'Mis Clases', i:'chalkboard-user'},
+                    {id:'behavior', t:'Anecdotario Global', i:'book-skull'},
+                    {id:'settings', t:'Ajustes', i:'gear'}
                 ];
+                document.getElementById('nav-menu').innerHTML = opts.map(o => `
+                    <button onclick="app.nav('${o.id}')" class="w-full text-left p-3 rounded hover:bg-gray-100 text-gray-600 flex gap-3 items-center">
+                        <i class="fa-solid fa-${o.i} w-6 text-center"></i> <span class="hidden md:inline">${o.t}</span>
+                    </button>`).join('');
+            },
+            nav: function(view, param=null) {
+                const c = document.getElementById('app-view');
+                document.getElementById('page-title').innerText = view.toUpperCase();
+                c.innerHTML = '';
                 
-                document.getElementById('nav-menu').innerHTML = menu.map(m => `
-                    <button onclick="app.nav('${m.id}')" class="w-full text-left p-3 rounded-lg hover:bg-gray-100 transition flex items-center gap-4 text-gray-600 font-medium">
-                        <i class="fa-solid fa-${m.icon} w-6 text-center ${m.color}"></i>
-                        <span class="hidden md:inline">${m.label}</span>
-                    </button>
-                `).join('');
+                if(view === 'dashboard') this.viewDashboard(c);
+                if(view === 'classes') this.viewClasses(c);
+                if(view === 'classDetail') this.viewClassDetail(c, param);
+                if(view === 'behavior') this.viewBehavior(c);
+                if(view === 'settings') this.viewSettings(c);
             },
 
-            nav: function(viewId, param = null) {
-                this.currentView = viewId;
-                const container = document.getElementById('view-container');
-                const title = document.getElementById('page-title');
-                
-                // Título dinámico
-                const menuTitle = {
-                    dashboard: this.t('dash'), classes: this.t('classes'), schedule: this.t('schedule'),
-                    students: this.t('students'), planner: this.t('planner'), grades: this.t('grades'),
-                    behavior: this.t('behavior'), settings: this.t('settings'), classDetail: 'Clase'
-                };
-                title.innerText = menuTitle[viewId] || 'App';
+            // ==========================================
+            // 3. VISTAS
+            // ==========================================
 
-                switch(viewId) {
-                    case 'dashboard': this.renderDashboard(container); break;
-                    case 'classes': this.renderClasses(container); break;
-                    case 'classDetail': this.renderClassDetail(container, param); break;
-                    case 'schedule': this.renderSchedule(container); break;
-                    case 'students': this.renderStudents(container); break;
-                    case 'planner': this.renderPlanner(container); break;
-                    case 'grades': this.renderGrades(container); break;
-                    case 'behavior': this.renderBehavior(container); break;
-                    case 'settings': this.renderSettings(container); break;
+            // --- DASHBOARD ---
+            viewDashboard: function(c) {
+                const totalSt = this.data.students.length;
+                const totalInc = this.data.behavior.length;
+                c.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-in">
+                        <div class="card p-6 border-l-4 border-blue-500">
+                            <h3 class="text-gray-500 font-bold uppercase text-xs">Total Alumnos</h3>
+                            <p class="text-3xl font-bold mt-2">${totalSt}</p>
+                        </div>
+                        <div class="card p-6 border-l-4 border-red-500">
+                            <h3 class="text-gray-500 font-bold uppercase text-xs">Incidencias Totales</h3>
+                            <p class="text-3xl font-bold mt-2 text-red-500">${totalInc}</p>
+                            <button onclick="app.nav('behavior')" class="text-xs text-blue-500 mt-2 underline">Ver Anecdotario</button>
+                        </div>
+                        <div class="card p-6">
+                            <h3 class="text-gray-500 font-bold uppercase text-xs mb-3">Acceso Rápido</h3>
+                            <button onclick="app.nav('classes')" class="w-full bg-blue-600 text-white p-2 rounded mb-2">Ir a Clases</button>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // --- CLASES ---
+            viewClasses: function(c) {
+                c.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 fade-in">
+                        ${this.data.subjects.map(s => `
+                            <div onclick="app.nav('classDetail', '${s.id}')" class="card p-6 cursor-pointer hover:bg-blue-50 border-t-4 border-${s.color}-500 transition hover:shadow-lg">
+                                <h3 class="font-bold text-xl">${s.name}</h3>
+                                <p class="text-sm text-gray-500">${this.data.students.filter(x=>x.subjectId===s.id).length} Alumnos</p>
+                            </div>
+                        `).join('')}
+                        <button onclick="app.addSubject()" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-gray-400 hover:border-blue-500 hover:text-blue-500 flex flex-col items-center justify-center">
+                            <i class="fa-solid fa-plus text-2xl mb-2"></i> Crear Clase
+                        </button>
+                    </div>`;
+            },
+
+            // --- DETALLE CLASE (CORE) ---
+            viewClassDetail: function(c, sId) {
+                const s = this.data.subjects.find(x => x.id === sId);
+                const students = this.data.students.filter(x => x.subjectId === sId);
+                
+                c.innerHTML = `
+                <div class="flex flex-col h-full fade-in">
+                    <div class="flex justify-between items-center mb-4 bg-white p-4 rounded shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <button onclick="app.nav('classes')" class="text-gray-400 hover:text-dark"><i class="fa-solid fa-arrow-left"></i></button>
+                            <h2 class="text-2xl font-bold text-${s.color}-600">${s.name}</h2>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="app.configRewards()" class="bg-gray-100 text-gray-600 px-3 py-2 rounded hover:bg-gray-200" title="Editar Premios"><i class="fa-solid fa-gear"></i> Premios</button>
+                            <button onclick="app.addStudent('${sId}')" class="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700"><i class="fa-solid fa-plus"></i> Alumno</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto pb-20">
+                        ${students.map(st => `
+                            <div class="card p-4 relative group">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700 text-lg">${st.name.charAt(0)}</div>
+                                        <div>
+                                            <div class="font-bold text-lg leading-tight">${st.name}</div>
+                                            <div class="text-xs text-gray-500">Nivel ${Math.floor((st.xp||0)/100)+1}</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold text-xl text-green-600">$${st.wallet||0}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-4 gap-2 mt-4">
+                                    <button onclick="app.uiGivePoints('${st.id}')" class="bg-green-50 text-green-600 p-2 rounded hover:bg-green-100 flex flex-col items-center text-xs">
+                                        <i class="fa-solid fa-circle-plus text-lg mb-1"></i> Premiar
+                                    </button>
+                                    <button onclick="app.uiShop('${st.id}')" class="bg-purple-50 text-purple-600 p-2 rounded hover:bg-purple-100 flex flex-col items-center text-xs">
+                                        <i class="fa-solid fa-cart-shopping text-lg mb-1"></i> Tienda
+                                    </button>
+                                    <button onclick="app.uiBehavior('${st.id}')" class="bg-yellow-50 text-yellow-600 p-2 rounded hover:bg-yellow-100 flex flex-col items-center text-xs">
+                                        <i class="fa-solid fa-triangle-exclamation text-lg mb-1"></i> Reporte
+                                    </button>
+                                    <button onclick="app.uiHistory('${st.id}')" class="bg-blue-50 text-blue-600 p-2 rounded hover:bg-blue-100 flex flex-col items-center text-xs border border-blue-200">
+                                        <i class="fa-solid fa-file-lines text-lg mb-1"></i> Historial
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+            },
+
+            // --- ANECDOTARIO / HISTORIAL ---
+            viewBehavior: function(c) {
+                // Vista Global de Incidencias
+                const logs = this.data.behavior.sort((a,b) => new Date(b.date) - new Date(a.date));
+                c.innerHTML = `
+                    <div class="card p-6 max-w-4xl mx-auto">
+                        <h3 class="font-bold text-xl mb-4 border-b pb-2">Anecdotario Global (Incidencias)</h3>
+                        <div class="space-y-4">
+                            ${logs.map(l => {
+                                const st = this.data.students.find(s=>s.id===l.studentId);
+                                return `
+                                <div class="flex gap-4 p-3 bg-gray-50 rounded border-l-4 ${l.severity==='red'?'border-red-500':l.severity==='yellow'?'border-yellow-500':'border-green-500'}">
+                                    <div class="text-xs text-gray-400 w-24">${l.date}</div>
+                                    <div class="flex-1">
+                                        <div class="font-bold">${st ? st.name : 'Desconocido'} <span class="font-normal text-sm bg-white border px-1 rounded ml-2">${l.severity}</span></div>
+                                        <p class="text-gray-800">${l.desc}</p>
+                                        <div class="text-xs text-gray-500 mt-1">${l.tags.map(t=>`#${t}`).join(' ')}</div>
+                                    </div>
+                                </div>`;
+                            }).join('')}
+                            ${logs.length===0 ? '<p class="text-gray-400 text-center">Sin incidencias registradas.</p>' : ''}
+                        </div>
+                    </div>`;
+            },
+
+            // --- AJUSTES ---
+            viewSettings: function(c) {
+                c.innerHTML = `
+                <div class="max-w-2xl mx-auto space-y-6 fade-in">
+                    <div class="card p-6">
+                        <h3 class="font-bold mb-4">Datos Generales</h3>
+                        <input id="set-name" class="border p-2 w-full rounded mb-3" value="${this.data.settings.name}" placeholder="Nombre Profesor">
+                        <button onclick="app.saveSettings()" class="bg-primary text-white px-4 py-2 rounded">Guardar</button>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="font-bold mb-4">Configuración de Aula</h3>
+                        <button onclick="app.configRewards()" class="w-full text-left p-3 border rounded hover:bg-gray-50 mb-2 flex justify-between">
+                            <span>Editar Botones de Puntos y Tienda</span> <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                        <button onclick="app.exportExcel()" class="w-full text-left p-3 border rounded hover:bg-green-50 text-green-700 flex justify-between">
+                            <span>Descargar Reporte Excel Completo</span> <i class="fa-solid fa-file-excel"></i>
+                        </button>
+                    </div>
+                    <div class="card p-6 border-red-100 bg-red-50">
+                        <h3 class="font-bold text-red-600 mb-2">Zona de Peligro</h3>
+                        <button onclick="app.resetAll()" class="text-red-500 underline text-sm">Borrar todos los datos</button>
+                    </div>
+                </div>`;
+            },
+
+            // ==========================================
+            // 4. MODALES Y ACCIONES (LO IMPORTANTE)
+            // ==========================================
+
+            // A. PREMIAR (CON CAMPO LIBRE)
+            uiGivePoints: async function(sId) {
+                const s = this.data.students.find(x => x.id === sId);
+                
+                // Generar HTML de botones preestablecidos
+                const buttons = this.data.config.points.map((p, idx) => `
+                    <button onclick="app.applyPoints('${sId}', ${p.val}, '${p.label}')" 
+                        class="p-3 bg-white border rounded shadow-sm hover:bg-blue-50 hover:border-blue-300 transition text-left flex items-center justify-between group">
+                        <span><span class="text-xl mr-2">${p.icon}</span> ${p.label}</span>
+                        <span class="font-bold text-blue-600 bg-blue-50 px-2 rounded group-hover:bg-white">+${p.val}</span>
+                    </button>
+                `).join('');
+
+                await Swal.fire({
+                    title: `Premiar a ${s.name}`,
+                    html: `
+                        <div class="grid grid-cols-1 gap-2 mb-4 max-h-60 overflow-y-auto p-1 bg-gray-50 rounded">
+                            ${buttons}
+                        </div>
+                        <hr class="my-3">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-sm font-bold text-gray-500 text-left">Puntaje Manual (Cualquier valor):</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="manual-pts" class="swal2-input m-0 flex-1" placeholder="Ej: 50 o -20">
+                                <input type="text" id="manual-reason" class="swal2-input m-0 flex-1" placeholder="Motivo">
+                            </div>
+                        </div>
+                    `,
+                    confirmButtonText: 'Aplicar Manual',
+                    showCancelButton: true,
+                    preConfirm: () => {
+                        const val = parseInt(document.getElementById('manual-pts').value);
+                        const rsn = document.getElementById('manual-reason').value || 'Manual';
+                        if(!isNaN(val)) return app.applyPoints(sId, val, rsn);
+                    }
+                });
+            },
+
+            applyPoints: function(sId, amount, reason) {
+                const s = this.data.students.find(x => x.id === sId);
+                if(s) {
+                    s.xp = (s.xp || 0) + amount; // XP siempre suma (o resta si es negativo)
+                    s.wallet = (s.wallet || 0) + amount; // Billetera igual
+                    
+                    // LOG
+                    this.data.rewardsLog.push({
+                        type: 'point',
+                        studentId: sId,
+                        amount: amount,
+                        reason: reason,
+                        date: new Date().toLocaleString()
+                    });
+                    
+                    this.sync(); // Guardar
+                    this.nav('classDetail', s.subjectId); // Refrescar
+                    Swal.close();
+                    const icon = amount >= 0 ? 'success' : 'warning';
+                    Swal.fire({icon: icon, title: `${amount > 0 ? '+' : ''}${amount} pts`, text: reason, timer: 1500, showConfirmButton: false});
                 }
             },
 
-            // ==========================================
-            // VISTAS PRINCIPALES
-            // ==========================================
-
-            // --- 1. DASHBOARD ---
-            renderDashboard: function(c) {
-                const incCount = this.data.behavior.filter(b => b.date === new Date().toISOString().split('T')[0]).length;
-                c.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-in">
-                    <div class="card p-6 border-l-4 border-blue-500">
-                        <h3 class="font-bold text-gray-500 text-sm uppercase">${this.t('welcome')}</h3>
-                        <div class="mt-4 flex justify-between text-center">
-                            <div><div class="text-2xl font-bold">${this.data.students.length}</div><div class="text-xs text-gray-400">${this.t('students')}</div></div>
-                            <div><div class="text-2xl font-bold text-red-500">${incCount}</div><div class="text-xs text-gray-400">${this.t('incidents')}</div></div>
-                        </div>
-                    </div>
-                    <div class="card p-6">
-                        <h3 class="font-bold text-gray-700 mb-4">${this.t('actions')}</h3>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="app.nav('classes')" class="bg-indigo-50 p-2 rounded text-indigo-600 hover:bg-indigo-100"><i class="fa-solid fa-chalkboard"></i> ${this.t('classes')}</button>
-                            <button onclick="app.nav('behavior')" class="bg-yellow-50 p-2 rounded text-yellow-600 hover:bg-yellow-100"><i class="fa-solid fa-triangle-exclamation"></i> ${this.t('incidents')}</button>
-                            <button onclick="app.addAlert()" class="bg-gray-50 p-2 rounded text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-note-sticky"></i> ${this.t('note')}</button>
-                            <button onclick="app.nav('students')" class="bg-green-50 p-2 rounded text-green-600 hover:bg-green-100"><i class="fa-solid fa-gift"></i> ${this.t('reward')}</button>
-                        </div>
-                    </div>
-                    <div class="card p-6">
-                         <h3 class="font-bold text-gray-700 mb-2">Agenda</h3>
-                         <div class="space-y-2 text-sm max-h-40 overflow-y-auto">${this.getTodaysAgendaHTML()}</div>
-                    </div>
-                </div>
-                <div class="mt-8">
-                    <h3 class="font-bold text-xl mb-4">Notas</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                        ${this.data.alerts.map((a, i) => `
-                            <div class="p-4 rounded shadow relative ${a.color} rotate-1 hover:rotate-0 transition">
-                                <button onclick="app.delAlert(${i})" class="absolute top-1 right-1 text-gray-400 hover:text-red-500"><i class="fa-solid fa-times"></i></button>
-                                <p class="font-handwriting">${a.text}</p>
-                            </div>
-                        `).join('')}
-                        <button onclick="app.addAlert()" class="border-2 border-dashed border-gray-300 rounded p-4 text-gray-400 hover:border-blue-500 hover:text-blue-500">+ ${this.t('note')}</button>
-                    </div>
-                </div>`;
-            },
-
-            // --- 2. CLASES (CLASS HUB) ---
-            renderClasses: function(c) {
-                c.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-in">
-                    ${this.data.subjects.map(s => `
-                        <div onclick="app.nav('classDetail', '${s.id}')" class="card p-6 cursor-pointer hover:bg-${s.color}-50 border-t-4 border-${s.color}-500 group relative">
-                            <h3 class="font-bold text-xl text-gray-700 group-hover:text-${s.color}-600">${s.name}</h3>
-                            <div class="text-sm text-gray-500 mt-2">
-                                <p><i class="fa-solid fa-users"></i> ${this.data.students.filter(st => st.subjectId === s.id).length} ${this.t('students')}</p>
-                            </div>
-                            <span class="absolute bottom-4 right-4 text-gray-300 group-hover:text-${s.color}-500"><i class="fa-solid fa-arrow-right"></i></span>
-                        </div>
-                    `).join('')}
-                    <button onclick="app.addSubject()" class="border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:text-blue-500">
-                        <i class="fa-solid fa-plus text-3xl mb-2"></i><span>Nueva Materia</span>
-                    </button>
-                </div>`;
-            },
-
-            // --- 3. DETALLE DE CLASE (CENTRO DE MANDO) ---
-            renderClassDetail: function(c, subjectId) {
-                const subj = this.data.subjects.find(s => s.id === subjectId);
-                if(!subj) return this.nav('classes');
-                const students = this.data.students.filter(s => s.subjectId === subjectId);
-                const plans = this.data.planning.filter(p => p.subjectId === subjectId);
-
-                c.innerHTML = `
-                <div class="flex flex-col h-full fade-in">
-                    <div class="flex justify-between items-center mb-4 bg-white p-4 rounded shadow">
-                        <div class="flex items-center gap-4">
-                            <button onclick="app.nav('classes')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-arrow-left"></i></button>
-                            <h2 class="text-2xl font-bold text-${subj.color}-600">${subj.name}</h2>
-                            <span class="bg-gray-100 px-2 py-1 rounded text-xs text-gray-500">${students.length} Alumnos</span>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="app.bulkReward('${subjectId}')" class="bg-purple-600 text-white px-3 py-2 rounded hover:bg-purple-700 shadow flex items-center gap-2">
-                                <i class="fa-solid fa-layer-group"></i> ${this.t('bulk')}
-                            </button>
-                            <button onclick="app.addStudent('${subjectId}')" class="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 shadow">
-                                <i class="fa-solid fa-user-plus"></i> Alumno
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
-                        
-                        <div class="lg:col-span-2 flex flex-col gap-6 overflow-y-auto">
-                            <div class="card p-4">
-                                <h3 class="font-bold text-gray-700 mb-3 border-b pb-2">Listado de Alumnos</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    ${students.map(s => `
-                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded border hover:bg-white hover:shadow transition">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">${s.name.charAt(0)}</div>
-                                                <div>
-                                                    <p class="font-bold text-sm">${s.name}</p>
-                                                    <p class="text-xs text-gray-500">Lvl ${Math.floor((s.xp||0)/100) + 1} • <i class="fa-solid fa-coins text-yellow-500"></i> ${s.wallet||0}</p>
-                                                </div>
-                                            </div>
-                                            <div class="flex gap-1">
-                                                <button onclick="app.giveReward('${s.id}')" class="p-2 text-green-500 hover:bg-green-100 rounded" title="Premiar"><i class="fa-solid fa-plus-circle"></i></button>
-                                                <button onclick="app.redeem('${s.id}')" class="p-2 text-orange-500 hover:bg-orange-100 rounded" title="Tienda"><i class="fa-solid fa-cart-shopping"></i></button>
-                                                <button onclick="app.addGrade('${s.id}')" class="p-2 text-blue-500 hover:bg-blue-100 rounded" title="Nota"><i class="fa-solid fa-pen"></i></button>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                    ${students.length===0?'<p class="text-gray-400 p-4">Añade alumnos arriba.</p>':''}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col gap-6 overflow-y-auto">
-                            <div class="card p-4">
-                                <div class="flex justify-between items-center mb-2">
-                                    <h3 class="font-bold text-gray-700">Planificación</h3>
-                                    <button onclick="app.addPlan('${subjectId}')" class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded">+ Crear</button>
-                                </div>
-                                <div class="space-y-3 max-h-60 overflow-y-auto">
-                                    ${plans.slice(0,5).map(p => `
-                                        <div class="border-l-4 border-orange-400 pl-3 py-1 bg-gray-50 rounded-r">
-                                            <div class="font-bold text-sm">${p.topic}</div>
-                                            <div class="text-xs text-gray-500">${p.date}</div>
-                                        </div>
-                                    `).join('')}
-                                    ${plans.length===0?'<p class="text-xs text-gray-400">Sin planes recientes.</p>':''}
-                                </div>
-                            </div>
-
-                            <div class="card p-4">
-                                <h3 class="font-bold text-gray-700 mb-2">Incidencias</h3>
-                                <button onclick="app.nav('behavior')" class="w-full bg-yellow-100 text-yellow-700 py-2 rounded mb-2">Ver Historial Completo</button>
-                                <button onclick="app.addBehavior('GLOBAL', '${subjectId}')" class="w-full border border-yellow-500 text-yellow-600 py-2 rounded">Reportar Clase Completa</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-            },
-
-            // --- 4. AJUSTES (RECUPERADO Y MEJORADO) ---
-            renderSettings: function(c) {
-                c.innerHTML = `
-                <div class="grid md:grid-cols-2 gap-6 fade-in">
-                    <div class="bg-white p-6 rounded shadow">
-                        <h3 class="font-bold border-b pb-2 mb-4">General</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase">Nombre Profesor</label>
-                                <input id="set-name" class="w-full border p-2 rounded" value="${this.data.settings.name}">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase">Colegio</label>
-                                <input id="set-school" class="w-full border p-2 rounded" value="${this.data.settings.school}">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase">Idioma / Language</label>
-                                <select id="set-lang" class="w-full border p-2 rounded">
-                                    <option value="es" ${this.data.settings.lang === 'es' ? 'selected' : ''}>Español</option>
-                                    <option value="en" ${this.data.settings.lang === 'en' ? 'selected' : ''}>English</option>
-                                </select>
-                            </div>
-                            <button onclick="app.saveProfile()" class="bg-primary text-white px-4 py-2 rounded w-full">Guardar Cambios</button>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded shadow">
-                        <h3 class="font-bold border-b pb-2 mb-4">Datos y Seguridad</h3>
-                        <div class="space-y-3">
-                            <button onclick="app.setPin()" class="w-full text-left p-2 border rounded hover:bg-gray-50 flex justify-between">
-                                <span>Cambiar PIN de Bloqueo</span> <i class="fa-solid fa-key text-gray-400"></i>
-                            </button>
-                            <button onclick="app.exportExcel()" class="w-full text-left p-2 border rounded hover:bg-green-50 flex justify-between">
-                                <span class="text-green-700">Exportar a Excel</span> <i class="fa-solid fa-file-excel text-green-500"></i>
-                            </button>
-                            <div class="border-t pt-3 mt-3">
-                                <button onclick="app.deleteEverything()" class="w-full bg-red-100 text-red-600 p-2 rounded hover:bg-red-200 font-bold">
-                                    <i class="fa-solid fa-trash"></i> BORRAR TODO (Reset)
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded shadow md:col-span-2">
-                        <h3 class="font-bold border-b pb-2 mb-4">Materias Globales</h3>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            ${this.data.subjects.map(s => `
-                                <span class="bg-${s.color}-100 text-${s.color}-700 px-3 py-1 rounded-full text-sm flex items-center gap-2">
-                                    ${s.name} <button onclick="app.delSubject('${s.id}')" class="hover:text-red-500">×</button>
-                                </span>
-                            `).join('')}
-                        </div>
-                        <button onclick="app.addSubject()" class="text-blue-500 text-sm hover:underline">+ Agregar Nueva Materia</button>
-                    </div>
-                </div>`;
-            },
-
-            // --- OTRAS VISTAS (VERSIONES SIMPLIFICADAS PARA AHORRAR ESPACIO PERO FUNCIONALES) ---
-            renderStudents: function(c) {
-                // Vista global de alumnos
-                c.innerHTML = `
-                <div class="card p-6">
-                    <h3 class="font-bold mb-4">Todos los Alumnos</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        ${this.data.students.map(s => `
-                            <div class="border p-4 rounded text-center">
-                                <div class="font-bold">${s.name}</div>
-                                <div class="text-xs text-gray-500">${this.getSubjectName(s.subjectId)}</div>
-                                <div class="text-sm mt-2 font-mono text-green-600">$${s.wallet}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`;
-            },
-            renderSchedule: function(c) {
-                const days = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
-                c.innerHTML = `
-                <div class="flex justify-between mb-4"><h3 class="font-bold text-xl">Horario</h3><button onclick="app.editScheduleMode()" class="bg-dark text-white px-3 py-1 rounded text-sm">Editar</button></div>
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-2">${days.map(d => `<div class="bg-white p-2 rounded shadow min-h-[150px]"><div class="font-bold text-center border-b mb-2">${d}</div>${this.getScheduleBlocks(d)}</div>`).join('')}</div>`;
-            },
-            getScheduleBlocks: function(day) {
-                return this.data.schedule.blocks.filter(b=>b.day===day).sort((a,b)=>a.start.localeCompare(b.start))
-                .map(b => `<div class="text-xs p-1 mb-1 bg-${this.getColor(b.subjectId)}-100 border-l-2 border-${this.getColor(b.subjectId)}-500 rounded">${b.start} ${this.getSubjectName(b.subjectId)}</div>`).join('');
-            },
-            // ... (Grades y Behavior usan lógica similar a v3, omitido por brevedad pero funcional si se navega)
-            renderGrades: function(c) { c.innerHTML = '<div class="card p-10 text-center text-gray-500">Ve a "Mis Clases" para gestionar notas por materia.</div>'; },
-            renderBehavior: function(c) { c.innerHTML = '<div class="card p-10 text-center text-gray-500">Ve a "Mis Clases" o usa el botón rápido en Dashboard.</div>'; },
-
-            // ==========================================
-            // 5. ACCIONES & MODALES
-            // ==========================================
-
-            // --- BULK REWARDS (NUEVO) ---
-            bulkReward: async function(subjectId) {
-                const students = this.data.students.filter(s => s.subjectId === subjectId);
-                if(students.length === 0) return Swal.fire('Vacío', 'No hay alumnos.', 'warning');
-
-                // 1. Selección de alumnos
-                const { value: selectedIds } = await Swal.fire({
-                    title: 'Seleccionar Alumnos',
-                    html: `
-                        <div class="text-left max-h-60 overflow-y-auto border p-2 rounded">
-                            <label class="flex items-center gap-2 font-bold border-b pb-2 mb-2">
-                                <input type="checkbox" onchange="document.querySelectorAll('.bulk-check').forEach(c => c.checked = this.checked)" checked> Todos
-                            </label>
-                            ${students.map(s => `
-                                <div class="flex items-center gap-2 mb-1">
-                                    <input type="checkbox" class="bulk-check" value="${s.id}" checked> ${s.name}
-                                </div>
-                            `).join('')}
-                        </div>
-                    `,
-                    preConfirm: () => {
-                        return Array.from(document.querySelectorAll('.bulk-check:checked')).map(c => c.value);
-                    }
-                });
-
-                if(!selectedIds || selectedIds.length === 0) return;
-
-                // 2. Selección de Premio
-                const presets = this.data.rewardPresets.map((p,i) => `<button onclick="app.applyBulk(${i}, '${selectedIds.join(',')}')" class="w-full text-left p-2 border rounded mb-2 hover:bg-blue-50">${p.icon} ${p.label} (+${p.val})</button>`).join('');
-                
-                Swal.fire({
-                    title: `Premiar a ${selectedIds.length} alumnos`,
-                    html: `<div class="mb-4">${presets}</div><hr><input id="bulk-pts" type="number" class="swal2-input" placeholder="O puntos manuales">`,
-                    showCancelButton: true,
-                    confirmButtonText: 'Aplicar Manual',
-                    preConfirm: () => {
-                        const pts = document.getElementById('bulk-pts').value;
-                        if(pts) this.processBulk(selectedIds, parseInt(pts), 'Manual');
-                    }
-                });
-            },
-
-            applyBulk: function(idx, idsStr) {
-                const ids = idsStr.split(',');
-                const preset = this.data.rewardPresets[idx];
-                this.processBulk(ids, preset.val, preset.label);
-                Swal.close();
-            },
-
-            processBulk: function(ids, amount, reason) {
-                let count = 0;
-                ids.forEach(id => {
-                    const s = this.data.students.find(st => st.id === id);
-                    if(s) {
-                        s.xp = (s.xp||0) + amount; // XP siempre suma
-                        s.wallet = (s.wallet||0) + amount; // Billetera suma o resta
-                        this.data.rewardsLog.push({ studentId: id, amount, reason, date: new Date().toISOString() });
-                        count++;
-                    }
-                });
-                this.saveData();
-                this.renderClassDetail(document.getElementById('view-container'), this.data.students.find(s=>s.id===ids[0]).subjectId);
-                Swal.fire('Éxito', `Se asignaron puntos a ${count} alumnos.`, 'success');
-            },
-
-            // --- REDENCIÓN / TIENDA (RECUPERADO) ---
-            redeem: async function(studentId) {
-                const s = this.data.students.find(st => st.id === studentId);
-                
-                // Generar HTML de la tienda
-                const itemsHtml = this.data.shopItems.map(item => `
-                    <div class="flex justify-between items-center border p-2 rounded mb-2 ${s.wallet < item.cost ? 'opacity-50 grayscale' : 'hover:bg-green-50 cursor-pointer'}" 
-                         onclick="${s.wallet >= item.cost ? `app.buyItem('${studentId}', ${item.cost}, '${item.name}')` : ''}">
-                        <div class="flex items-center gap-2">
+            // B. TIENDA
+            uiShop: function(sId) {
+                const s = this.data.students.find(x => x.id === sId);
+                const items = this.data.config.shop.map(item => {
+                    const canBuy = s.wallet >= item.cost;
+                    return `
+                    <div onclick="${canBuy ? `app.buyItem('${sId}', ${item.cost}, '${item.name}')` : ''}" 
+                         class="flex justify-between items-center p-3 border rounded mb-2 ${canBuy ? 'hover:bg-green-50 cursor-pointer' : 'opacity-50 bg-gray-100'}">
+                        <div class="flex items-center gap-3">
                             <span class="text-2xl">${item.icon}</span>
-                            <div class="text-left">
+                            <div class="text-left leading-tight">
                                 <div class="font-bold text-sm">${item.name}</div>
                                 <div class="text-xs text-gray-500">Costo: ${item.cost}</div>
                             </div>
                         </div>
-                        ${s.wallet >= item.cost ? '<i class="fa-solid fa-check text-green-500"></i>' : '<i class="fa-solid fa-lock text-gray-300"></i>'}
-                    </div>
-                `).join('');
+                        ${canBuy ? '<i class="fa-solid fa-bag-shopping text-green-500"></i>' : '<i class="fa-solid fa-lock text-gray-400"></i>'}
+                    </div>`;
+                }).join('');
 
                 Swal.fire({
-                    title: `Tienda (${s.name})`,
-                    html: `
-                        <div class="bg-green-100 text-green-800 p-2 rounded mb-4 font-bold">Saldo: $${s.wallet}</div>
-                        <div class="max-h-60 overflow-y-auto">${itemsHtml}</div>
-                    `,
-                    footer: '<small>Toca un ítem disponible para comprar</small>'
+                    title: `Tienda (Saldo: $${s.wallet})`,
+                    html: `<div class="max-h-80 overflow-y-auto">${items}</div>`,
+                    showConfirmButton: false
                 });
             },
 
-            buyItem: function(sId, cost, itemName) {
-                const s = this.data.students.find(st => st.id === sId);
-                if(s.wallet >= cost) {
-                    s.wallet -= cost;
-                    this.data.rewardsLog.push({ studentId: sId, amount: -cost, reason: `Compra: ${itemName}`, date: new Date().toISOString() });
-                    this.saveData();
-                    // Refrescar UI
-                    this.renderClassDetail(document.getElementById('view-container'), s.subjectId);
-                    Swal.fire('Comprado', `Ha canjeado: ${itemName}`, 'success');
+            buyItem: function(sId, cost, name) {
+                const s = this.data.students.find(x => x.id === sId);
+                s.wallet -= cost;
+                this.data.rewardsLog.push({
+                    type: 'shop',
+                    studentId: sId,
+                    amount: -cost,
+                    reason: `Compró: ${name}`,
+                    date: new Date().toLocaleString()
+                });
+                this.sync();
+                this.nav('classDetail', s.subjectId);
+                Swal.fire('¡Comprado!', `Disfruta tu ${name}`, 'success');
+            },
+
+            // C. ANECDOTARIO INDIVIDUAL (CONDUCTA)
+            uiBehavior: async function(sId) {
+                const { value: form } = await Swal.fire({
+                    title: 'Reportar Conducta',
+                    html: `
+                        <select id="swal-sev" class="swal2-select w-full mb-2">
+                            <option value="green">🟢 Leve (Advertencia)</option>
+                            <option value="yellow">🟡 Moderada</option>
+                            <option value="red">🔴 Grave</option>
+                        </select>
+                        <textarea id="swal-desc" class="swal2-textarea w-full" placeholder="Describe lo sucedido..."></textarea>
+                        <input id="swal-tags" class="swal2-input w-full" placeholder="Etiquetas (ej: respeto tarea)">
+                    `,
+                    focusConfirm: false,
+                    preConfirm: () => {
+                        return {
+                            severity: document.getElementById('swal-sev').value,
+                            desc: document.getElementById('swal-desc').value,
+                            tags: document.getElementById('swal-tags').value
+                        }
+                    }
+                });
+
+                if (form && form.desc) {
+                    this.data.behavior.push({
+                        id: Date.now(),
+                        studentId: sId,
+                        date: new Date().toLocaleString(), // Guardamos fecha y hora
+                        severity: form.severity,
+                        desc: form.desc,
+                        tags: form.tags.split(' ').filter(t => t)
+                    });
+                    this.sync();
+                    Swal.fire('Registrado', 'Incidencia guardada en el historial.', 'success');
                 }
             },
 
-            // --- OTRAS FUNCIONES (PROFILE, MATERIAS, ETC) ---
-            saveProfile: function() {
-                this.data.settings.name = document.getElementById('set-name').value;
-                this.data.settings.school = document.getElementById('set-school').value;
-                this.data.settings.lang = document.getElementById('set-lang').value;
-                this.saveData();
-                this.updateProfileUI();
-                this.renderMenu(); // Actualizar idioma menú
-                Swal.fire('Guardado', 'Perfil actualizado', 'success');
+            // D. HISTORIAL UNIFICADO (EL EXPEDIENTE)
+            uiHistory: function(sId) {
+                const s = this.data.students.find(x => x.id === sId);
+                
+                // 1. Obtener logs de puntos/tienda
+                const pointLogs = this.data.rewardsLog.filter(x => x.studentId === sId).map(x => ({...x, category: 'wallet'}));
+                
+                // 2. Obtener logs de conducta
+                const behaviorLogs = this.data.behavior.filter(x => x.studentId === sId).map(x => ({
+                    date: x.date,
+                    reason: x.desc,
+                    amount: null,
+                    category: 'behavior',
+                    severity: x.severity,
+                    tags: x.tags
+                }));
+
+                // 3. Unir y ordenar por fecha (más reciente primero)
+                // Nota: Usamos Date.parse para ordenar, asumiendo formato localString standard
+                const allLogs = [...pointLogs, ...behaviorLogs].sort((a,b) => {
+                     // Intento simple de ordenamiento de strings de fecha
+                     return a.date < b.date ? 1 : -1; 
+                });
+
+                // 4. Generar tabla HTML
+                const rows = allLogs.map(log => {
+                    let iconHTML = '';
+                    let colorClass = '';
+                    let amountHTML = '';
+
+                    if (log.category === 'wallet') {
+                        if (log.type === 'shop') {
+                            iconHTML = '<i class="fa-solid fa-cart-shopping text-purple-500"></i>';
+                            amountHTML = `<span class="text-red-500 font-bold">${log.amount}</span>`;
+                        } else {
+                            iconHTML = '<i class="fa-solid fa-star text-yellow-500"></i>';
+                            amountHTML = `<span class="text-${log.amount >= 0 ? 'green' : 'red'}-500 font-bold">${log.amount > 0 ? '+' : ''}${log.amount}</span>`;
+                        }
+                    } else {
+                        // Conducta
+                        const color = log.severity === 'red' ? 'text-red-600' : (log.severity === 'yellow' ? 'text-yellow-500' : 'text-green-500');
+                        iconHTML = `<i class="fa-solid fa-triangle-exclamation ${color}"></i>`;
+                        amountHTML = `<span class="text-xs border px-1 rounded">Reporte</span>`;
+                    }
+
+                    return `
+                        <tr class="border-b hover:bg-gray-50 text-sm">
+                            <td class="p-2 text-gray-500 text-xs w-24">${log.date.split(',')[0]}</td>
+                            <td class="p-2 text-center w-10">${iconHTML}</td>
+                            <td class="p-2">
+                                <div class="font-medium">${log.reason}</div>
+                                ${log.tags ? `<div class="text-xs text-gray-400">${log.tags.map(t=>'#'+t).join(' ')}</div>` : ''}
+                            </td>
+                            <td class="p-2 text-right">${amountHTML}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                Swal.fire({
+                    title: `Historial: ${s.name}`,
+                    width: '600px',
+                    html: `
+                        <div class="bg-white rounded border overflow-hidden">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-gray-100 text-gray-600 text-xs uppercase">
+                                    <tr>
+                                        <th class="p-2">Fecha</th>
+                                        <th class="p-2 text-center">Tipo</th>
+                                        <th class="p-2">Detalle</th>
+                                        <th class="p-2 text-right">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rows.length ? rows : '<tr><td colspan="4" class="p-4 text-center text-gray-400">Historial vacío</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    `
+                });
             },
 
-            addStudent: async function(subId) {
-                const {value:name} = await Swal.fire({input:'text', title: this.t('students')});
-                if(name) {
-                    this.data.students.push({ id: 'st-'+Date.now(), name, subjectId: subId, xp:0, wallet:0 });
-                    this.saveData();
-                    this.renderClassDetail(document.getElementById('view-container'), subId);
+            // E. CONFIGURAR PREMIOS (EDITAR PRESETS)
+            configRewards: async function() {
+                // Generar lista editable
+                const pointsList = this.data.config.points.map((p,i) => `
+                    <div class="flex gap-2 mb-2 items-center">
+                        <input id="p-icon-${i}" value="${p.icon}" class="border w-10 text-center p-1 rounded">
+                        <input id="p-label-${i}" value="${p.label}" class="border flex-1 p-1 rounded">
+                        <input id="p-val-${i}" value="${p.val}" type="number" class="border w-16 p-1 rounded">
+                        <button onclick="app.delPreset('points', ${i})" class="text-red-500 px-2">×</button>
+                    </div>
+                `).join('');
+
+                const shopList = this.data.config.shop.map((p,i) => `
+                    <div class="flex gap-2 mb-2 items-center">
+                        <input id="s-icon-${i}" value="${p.icon}" class="border w-10 text-center p-1 rounded">
+                        <input id="s-name-${i}" value="${p.name}" class="border flex-1 p-1 rounded">
+                        <input id="s-cost-${i}" value="${p.cost}" type="number" class="border w-16 p-1 rounded">
+                        <button onclick="app.delPreset('shop', ${i})" class="text-red-500 px-2">×</button>
+                    </div>
+                `).join('');
+
+                const { isConfirmed } = await Swal.fire({
+                    title: 'Configurar Premios y Tienda',
+                    html: `
+                        <div class="text-left text-sm font-bold mb-1">Botones de Puntos</div>
+                        <div id="points-container" class="bg-gray-50 p-2 rounded mb-4 max-h-40 overflow-y-auto">${pointsList}</div>
+                        <button onclick="app.addPreset('points')" class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded mb-4">+ Agregar Botón</button>
+
+                        <div class="text-left text-sm font-bold mb-1">Artículos de Tienda</div>
+                        <div id="shop-container" class="bg-gray-50 p-2 rounded max-h-40 overflow-y-auto">${shopList}</div>
+                        <button onclick="app.addPreset('shop')" class="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded">+ Agregar Artículo</button>
+                    `,
+                    confirmButtonText: 'Guardar Cambios',
+                    showCancelButton: true,
+                    preConfirm: () => {
+                        // Recolectar datos manuales de los inputs
+                        const newPoints = [];
+                        const newShop = [];
+                        // Logica simplificada: Para guardar ediciones reales, necesitamos leer los inputs generados
+                        // Dado que Swal cierra el DOM, lo mejor en una app simple es borrar y re-agregar, 
+                        // pero aquí intentaremos leer los inputs por ID antes de cerrar.
+                        
+                        this.data.config.points.forEach((_, i) => {
+                            const icon = document.getElementById(`p-icon-${i}`)?.value;
+                            const label = document.getElementById(`p-label-${i}`)?.value;
+                            const val = document.getElementById(`p-val-${i}`)?.value;
+                            if(icon && label) newPoints.push({icon, label, val: parseInt(val)});
+                        });
+
+                        this.data.config.shop.forEach((_, i) => {
+                            const icon = document.getElementById(`s-icon-${i}`)?.value;
+                            const name = document.getElementById(`s-name-${i}`)?.value;
+                            const cost = document.getElementById(`s-cost-${i}`)?.value;
+                            if(icon && name) newShop.push({icon, name, cost: parseInt(cost)});
+                        });
+
+                        return { points: newPoints, shop: newShop };
+                    }
+                });
+
+                if(isConfirmed) {
+                    // Nota: Swal preConfirm devuelve los datos en result.value
+                    // Pero debido a la complejidad de leer inputs dinámicos en Swal, 
+                    // si editaste texto en el modal, el preConfirm de arriba lo captura.
+                    // Si agregaste items nuevos via 'app.addPreset', esos ya modificaron this.data.
+                    // Aquí solo guardamos y recargamos.
+                    this.sync();
+                    Swal.fire('Guardado', 'Configuración actualizada', 'success');
                 }
             },
             
-            giveReward: async function(sId) {
-                // Individual (similar a bulk pero para 1)
-                const presets = this.data.rewardPresets.map((p,i) => `<button onclick="app.processBulk(['${sId}'], ${p.val}, '${p.label}');Swal.close()" class="m-1 p-2 border rounded hover:bg-blue-50">${p.icon} ${p.label}</button>`).join('');
-                Swal.fire({ title: 'Premiar', html: presets });
+            // Auxiliares para Configurar Premios
+            delPreset: function(type, idx) {
+                this.data.config[type].splice(idx, 1);
+                // Truco: Forzamos update del modal cerrando y reabriendo (rápido y sucio pero funciona)
+                Swal.close(); setTimeout(() => this.configRewards(), 100);
+            },
+            addPreset: function(type) {
+                if(type === 'points') this.data.config.points.push({ label: 'Nuevo', val: 10, icon: '⭐' });
+                if(type === 'shop') this.data.config.shop.push({ name: 'Nuevo Ítem', cost: 50, icon: '🎁' });
+                Swal.close(); setTimeout(() => this.configRewards(), 100);
             },
 
-            // --- UTILS ---
-            togglePrivacy: function() { document.getElementById('privacy-lock').classList.remove('hidden'); },
-            unlockApp: function() { if(document.getElementById('unlock-pin').value === this.data.settings.pin) document.getElementById('privacy-lock').classList.add('hidden'); else Swal.fire('Error','PIN Incorrecto','error'); },
-            updateProfileUI: function() { document.getElementById('profile-name').innerText = this.data.settings.name; },
-            getSubjectName: function(id) { return this.data.subjects.find(s=>s.id===id)?.name || 'General'; },
-            getColor: function(id) { return this.data.subjects.find(s=>s.id===id)?.color || 'gray'; },
+
+            // --- UTILS BÁSICOS ---
             addSubject: async function() {
-                 const {value:name} = await Swal.fire({input:'text', title:'Nombre Materia'});
-                 if(name) { 
-                     const colors=['blue','green','red','yellow','purple','pink'];
-                     this.data.subjects.push({id:'s-'+Date.now(), name, color: colors[this.data.subjects.length%colors.length]});
-                     this.saveData(); this.renderClasses(document.getElementById('view-container'));
-                 }
+                const {value:n} = await Swal.fire({input:'text', title:'Nombre de la Clase'});
+                if(n) {
+                    const c = ['blue','green','purple','yellow','red','indigo'];
+                    this.data.subjects.push({ id:'s-'+Date.now(), name:n, color:c[this.data.subjects.length%c.length] });
+                    this.sync(); this.nav('classes');
+                }
             },
-            addAlert: async function() { const {value:t} = await Swal.fire({input:'text'}); if(t){this.data.alerts.push({text:t, color:'bg-yellow-100'}); this.saveData(); this.renderDashboard(document.getElementById('view-container'));}},
-            delAlert: function(i) { this.data.alerts.splice(i,1); this.saveData(); this.renderDashboard(document.getElementById('view-container'));},
-            
-            getTodaysAgendaHTML: function() {
-                // Lógica simple para demo
-                return '<div class="text-gray-400 italic">No hay eventos urgentes.</div>';
+            addStudent: async function(sId) {
+                const {value:n} = await Swal.fire({input:'text', title:'Nombre Alumno'});
+                if(n) {
+                    this.data.students.push({ id:'st-'+Date.now(), name:n, subjectId:sId, xp:0, wallet:0 });
+                    this.sync(); this.nav('classDetail', sId);
+                }
             },
-            
+            saveSettings: function() {
+                this.data.settings.name = document.getElementById('set-name').value;
+                this.sync();
+            },
             exportExcel: function() {
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(this.data.students), "Students");
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(this.data.rewardsLog), "Log");
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(this.data.students), "Alumnos");
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(this.data.rewardsLog), "Historial Puntos");
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(this.data.behavior), "Conducta");
                 XLSX.writeFile(wb, "TeacherApp_Data.xlsx");
             },
-            
-            deleteEverything: async function() {
-                const r = await Swal.fire({title:'¿Seguro?', text:'Se borrará todo.', icon:'warning', showCancelButton:true});
-                if(r.isConfirmed) {
-                    this.data = JSON.parse(JSON.stringify(DEFAULT_DB));
-                    this.saveData();
-                    location.reload();
-                }
+            resetAll: function() {
+                Swal.fire({title:'¿Borrar TODO?', icon:'warning', showCancelButton:true, confirmButtonText:'Sí, borrar'}).then(r=>{
+                    if(r.isConfirmed) { this.data = JSON.parse(JSON.stringify(DB_TEMPLATE)); this.sync(); location.reload(); }
+                });
+            },
+            lock: function() { document.getElementById('lock-screen').classList.remove('hidden'); },
+            unlock: function() { 
+                const p = document.getElementById('pin-input').value; 
+                if(p === this.data.settings.pin) document.getElementById('lock-screen').classList.add('hidden'); 
+                else Swal.fire('Error', 'PIN Incorrecto', 'error');
             }
         };
 
