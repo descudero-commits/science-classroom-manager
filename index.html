@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher App 2.0 - Master Edition</title>
+    <title>Teacher App 3.0 - Class Hub Edition</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -30,14 +30,11 @@
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f3f4f6; }
         .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: all 0.2s; }
         .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .btn-action { transition: transform 0.1s; }
-        .btn-action:active { transform: scale(0.95); }
         /* Scrollbars */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
-        /* Animaciones */
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .blur-screen { filter: blur(10px); pointer-events: none; user-select: none; }
@@ -48,8 +45,7 @@
     <div id="privacy-lock" class="fixed inset-0 z-50 bg-gray-900 flex flex-col items-center justify-center hidden text-white">
         <i class="fa-solid fa-lock text-6xl mb-4 text-primary"></i>
         <h2 class="text-2xl font-bold">App Bloqueada</h2>
-        <p class="mb-4">Ingresa tu PIN para continuar</p>
-        <input type="password" id="unlock-pin" class="text-black text-center text-2xl p-2 rounded w-32 tracking-widest" maxlength="4">
+        <input type="password" id="unlock-pin" class="text-black text-center text-2xl p-2 rounded w-32 tracking-widest mt-4" maxlength="4">
         <button onclick="app.unlockApp()" class="mt-4 bg-primary px-6 py-2 rounded hover:bg-blue-600">Desbloquear</button>
     </div>
 
@@ -90,64 +86,47 @@
 
     <script>
         // ==========================================
-        // 1. CONFIGURACIÓN INICIAL (EDITA TU ID)
+        // CONFIGURACIÓN (PON TU ID AQUI)
         // ==========================================
         const CONFIG = {
-            pantryId: '9df76c09-c878-45e6-9df9-7b02d9cd00ef', // <--- CAMBIA ESTO
-            basketName: 'TeacherAppMaster'
+            pantryId: '9df76c09-c878-45e6-9df9-7b02d9cd00ef', 
+            basketName: 'TeacherAppV3'
         };
 
-        // ==========================================
-        // 2. ESTRUCTURA DE DATOS (DATABASE)
-        // ==========================================
         const DEFAULT_DB = {
-            profile: { name: "Profesor", school: "Mi Colegio", pin: "1234", lang: "es" },
-            subjects: [
-                { id: "s1", name: "Matemáticas", color: "blue", room: "101" },
-                { id: "s2", name: "Ciencias", color: "green", room: "Lab" }
-            ],
-            students: [], // {id, name, subjectId, xp:0, wallet:0}
-            grades: [], // {studentId, period:1, value:4.5, date, desc}
-            behavior: [], // {id, studentId, date, severity:'red', tags:[], desc}
-            rewardsLog: [], // {studentId, amount, reason, date, type:'xp'|'wallet'}
+            profile: { name: "Profesor", school: "Mi Colegio", pin: "1234" },
+            subjects: [],
+            students: [],
+            grades: [],
+            behavior: [],
+            rewardsLog: [],
             rewardPresets: [
                 { label: "Tarea Completa", val: 5, icon: "📝" },
-                { label: "Participación", val: 3, icon: "✋" },
-                { label: "Olvido Material", val: -2, icon: "🚫" }
+                { label: "Participación", val: 3, icon: "✋" }
             ],
-            planning: [], // {id, subjectId, date, topic, objectives, activities}
-            schedule: {
-                blocks: [] // {day: 'Lunes', start: '08:00', end: '08:45', subjectId: 's1'}
-            },
-            alerts: [] // {id, text, color}
+            planning: [],
+            schedule: { blocks: [] },
+            alerts: []
         };
 
         const App = {
             data: null,
             currentView: 'dashboard',
             
-            // --- INICIO ---
             init: async function() {
-                // Verificar ID
                 if(CONFIG.pantryId === 'PON_AQUI_TU_ID_REAL') {
-                    Swal.fire('Falta Configuración', 'Edita el código HTML (Línea 55) y pon tu ID de Pantry.', 'error');
+                    Swal.fire('Falta Configuración', 'Edita el código HTML (Línea 88) y pon tu ID de Pantry.', 'error');
                     return;
                 }
-                
-                // Cargar Datos
                 await this.loadData();
-                
-                // Renderizar Menú
                 this.renderMenu();
                 this.nav('dashboard');
                 
-                // Eventos Globales
                 document.getElementById('unlock-pin').addEventListener('keyup', (e) => {
                     if(e.key === 'Enter') this.unlockApp();
                 });
             },
 
-            // --- NUBE (PANTRY) ---
             loadData: async function() {
                 try {
                     Swal.fire({title: 'Cargando...', didOpen: () => Swal.showLoading()});
@@ -155,16 +134,15 @@
                     const res = await fetch(url);
                     if(res.ok) {
                         this.data = await res.json();
-                        // Merge por si hay campos nuevos en actualizaciones futuras
                         this.data = { ...DEFAULT_DB, ...this.data }; 
                     } else {
-                        this.data = JSON.parse(JSON.stringify(DEFAULT_DB)); // Copia profunda
+                        this.data = JSON.parse(JSON.stringify(DEFAULT_DB));
                         await this.saveData(true);
                     }
                     Swal.close();
                     this.updateProfileUI();
                 } catch (e) {
-                    Swal.fire('Error de Conexión', 'No se pudo cargar la nube. Se usará modo offline temporal.', 'warning');
+                    Swal.fire('Error', 'Modo Offline activado por error de red.', 'warning');
                     this.data = JSON.parse(JSON.stringify(DEFAULT_DB));
                 }
             },
@@ -184,12 +162,12 @@
                 }
             },
 
-            // --- NAVEGACIÓN ---
             renderMenu: function() {
                 const menu = [
                     { id: 'dashboard', icon: 'chart-pie', label: 'Dashboard', color: 'text-blue-500' },
+                    { id: 'classes', icon: 'chalkboard', label: 'Mis Clases', color: 'text-indigo-600' }, // NUEVO
                     { id: 'schedule', icon: 'calendar-days', label: 'Horario', color: 'text-purple-500' },
-                    { id: 'students', icon: 'users', label: 'Alumnos', color: 'text-green-500' },
+                    { id: 'students', icon: 'users', label: 'Alumnos (Todos)', color: 'text-green-500' },
                     { id: 'planner', icon: 'book-open', label: 'Planeación', color: 'text-orange-500' },
                     { id: 'grades', icon: 'graduation-cap', label: 'Notas', color: 'text-red-500' },
                     { id: 'behavior', icon: 'eye', label: 'Anecdotario', color: 'text-yellow-500' },
@@ -205,34 +183,161 @@
                 `).join('');
             },
 
-            nav: function(viewId) {
+            nav: function(viewId, param = null) {
                 this.currentView = viewId;
                 const container = document.getElementById('view-container');
                 const title = document.getElementById('page-title');
                 
-                // Router simple
                 switch(viewId) {
                     case 'dashboard': this.renderDashboard(container); title.innerText = 'Dashboard'; break;
+                    case 'classes': this.renderClasses(container); title.innerText = 'Mis Clases'; break;
+                    case 'classDetail': this.renderClassDetail(container, param); title.innerText = 'Detalle de Clase'; break; // NUEVA VISTA
                     case 'schedule': this.renderSchedule(container); title.innerText = 'Horario Escolar'; break;
                     case 'students': this.renderStudents(container); title.innerText = 'Gestión Alumnos'; break;
-                    case 'planner': this.renderPlanner(container); title.innerText = 'Planificador de Clases'; break;
-                    case 'grades': this.renderGrades(container); title.innerText = 'Libreta de Notas'; break;
+                    case 'planner': this.renderPlanner(container); title.innerText = 'Planificador'; break;
+                    case 'grades': this.renderGrades(container); title.innerText = 'Notas'; break;
                     case 'behavior': this.renderBehavior(container); title.innerText = 'Registro Anecdótico'; break;
                     case 'settings': this.renderSettings(container); title.innerText = 'Configuración'; break;
                 }
             },
 
             // ==========================================
-            // 3. VISTAS (RENDERERS)
+            // NUEVA SECCIÓN: CLASES (CLASS HUB)
             // ==========================================
 
-            // --- A. DASHBOARD ---
+            renderClasses: function(c) {
+                c.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-in">
+                    ${this.data.subjects.map(s => `
+                        <div onclick="app.nav('classDetail', '${s.id}')" class="card p-6 cursor-pointer hover:bg-${s.color}-50 border-t-4 border-${s.color}-500 group">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-xl text-gray-700 group-hover:text-${s.color}-600">${s.name}</h3>
+                                <i class="fa-solid fa-arrow-right text-gray-300 group-hover:text-${s.color}-500"></i>
+                            </div>
+                            <div class="text-sm text-gray-500 space-y-2">
+                                <p><i class="fa-solid fa-users w-6"></i> ${this.data.students.filter(st => st.subjectId === s.id).length} Alumnos</p>
+                                <p><i class="fa-solid fa-calendar w-6"></i> ${this.data.planning.filter(p => p.subjectId === s.id).length} Planes</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                    
+                    <button onclick="app.addSubject()" class="border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:text-blue-500 transition">
+                        <i class="fa-solid fa-plus text-3xl mb-2"></i>
+                        <span>Nueva Materia</span>
+                    </button>
+                </div>`;
+            },
+
+            // ESTA ES LA VISTA "TODO EN UNO" POR CLASE QUE PEDISTE
+            renderClassDetail: function(c, subjectId) {
+                const subj = this.data.subjects.find(s => s.id === subjectId);
+                if(!subj) return this.nav('classes');
+
+                // Filtros de datos para esta clase
+                const students = this.data.students.filter(s => s.subjectId === subjectId);
+                const plans = this.data.planning.filter(p => p.subjectId === subjectId).sort((a,b) => new Date(b.date) - new Date(a.date));
+                const behaviors = this.data.behavior.filter(b => b.subjectId === subjectId || (b.subjectId === 'GLOBAL')).sort((a,b) => new Date(b.date) - new Date(a.date));
+                
+                // Filtro complejo: Logs de recompensas de alumnos QUE PERTENECEN a esta clase
+                const studentIds = students.map(s => s.id);
+                const rewards = this.data.rewardsLog.filter(r => studentIds.includes(r.studentId)).sort((a,b) => new Date(b.date) - new Date(a.date));
+
+                c.innerHTML = `
+                <div class="mb-6 flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <button onclick="app.nav('classes')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+                        <h2 class="text-2xl font-bold text-${subj.color}-600">${subj.name}</h2>
+                    </div>
+                    <button onclick="app.addStudent('${subjectId}')" class="bg-primary text-white px-4 py-2 rounded shadow hover:bg-blue-700">
+                        <i class="fa-solid fa-user-plus"></i> Agregar Alumno
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in h-[calc(100vh-180px)] overflow-y-auto">
+                    
+                    <div class="card p-4 flex flex-col h-96">
+                        <h3 class="font-bold border-b pb-2 mb-2 text-gray-700"><i class="fa-solid fa-users text-blue-500"></i> Alumnos (${students.length})</h3>
+                        <div class="overflow-y-auto flex-1 space-y-2">
+                            ${students.map(s => `
+                                <div class="flex justify-between items-center p-2 bg-gray-50 rounded hover:bg-gray-100">
+                                    <span class="font-medium">${s.name}</span>
+                                    <div class="flex gap-2 text-xs">
+                                        <span class="bg-blue-100 text-blue-700 px-2 rounded-full">XP: ${s.xp||0}</span>
+                                        <button onclick="app.giveReward('${s.id}')" class="text-green-600 hover:text-green-800"><i class="fa-solid fa-gift"></i></button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${students.length === 0 ? '<p class="text-center text-gray-400 mt-10">Sin alumnos.</p>' : ''}
+                        </div>
+                    </div>
+
+                    <div class="card p-4 flex flex-col h-96">
+                        <div class="flex justify-between border-b pb-2 mb-2">
+                            <h3 class="font-bold text-gray-700"><i class="fa-solid fa-book text-orange-500"></i> Planificación</h3>
+                            <button onclick="app.addPlan('${subjectId}')" class="text-xs bg-orange-100 text-orange-600 px-2 rounded hover:bg-orange-200">+ Crear</button>
+                        </div>
+                        <div class="overflow-y-auto flex-1 space-y-3">
+                            ${plans.map(p => `
+                                <div class="border-l-4 border-orange-400 pl-3 py-1">
+                                    <div class="font-bold text-sm">${p.topic}</div>
+                                    <div class="text-xs text-gray-500">${p.date}</div>
+                                    <div class="text-xs text-gray-600 mt-1 truncate">${p.objectives}</div>
+                                </div>
+                            `).join('')}
+                             ${plans.length === 0 ? '<p class="text-center text-gray-400 mt-10">Nada planeado.</p>' : ''}
+                        </div>
+                    </div>
+
+                    <div class="card p-4 flex flex-col h-96">
+                        <h3 class="font-bold border-b pb-2 mb-2 text-gray-700"><i class="fa-solid fa-star text-yellow-500"></i> Historial Puntos</h3>
+                        <div class="overflow-y-auto flex-1 text-sm">
+                            <table class="w-full text-left">
+                                <thead class="text-xs text-gray-400"><tr><th>Fecha</th><th>Alumno</th><th class="text-right">Pts</th></tr></thead>
+                                <tbody>
+                                    ${rewards.slice(0, 20).map(r => `
+                                        <tr class="border-b">
+                                            <td class="py-2 text-gray-500 text-xs">${new Date(r.date).toLocaleDateString()}</td>
+                                            <td>${this.getStudentName(r.studentId)}</td>
+                                            <td class="text-right font-mono ${r.amount>0?'text-green-600':'text-red-600'}">${r.amount>0?'+':''}${r.amount}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                             ${rewards.length === 0 ? '<p class="text-center text-gray-400 mt-10">Sin movimientos.</p>' : ''}
+                        </div>
+                    </div>
+
+                    <div class="card p-4 flex flex-col h-96">
+                        <div class="flex justify-between border-b pb-2 mb-2">
+                            <h3 class="font-bold text-gray-700"><i class="fa-solid fa-triangle-exclamation text-red-500"></i> Incidencias</h3>
+                             <button onclick="app.nav('behavior')" class="text-xs text-blue-500">Ver Completo</button>
+                        </div>
+                        <div class="overflow-y-auto flex-1 space-y-3">
+                            ${behaviors.map(b => `
+                                <div class="bg-gray-50 p-2 rounded text-sm relative pl-6">
+                                    <span class="absolute left-2 top-3 w-2 h-2 rounded-full ${b.severity==='red'?'bg-red-500':b.severity==='yellow'?'bg-yellow-400':'bg-green-500'}"></span>
+                                    <div class="flex justify-between font-bold text-gray-600">
+                                        <span>${b.studentId==='GLOBAL' ? 'TODA LA CLASE' : this.getStudentName(b.studentId)}</span>
+                                        <span class="text-xs font-normal">${b.date}</span>
+                                    </div>
+                                    <p class="text-gray-500 truncate">${b.desc}</p>
+                                </div>
+                            `).join('')}
+                            ${behaviors.length === 0 ? '<p class="text-center text-gray-400 mt-10">Sin incidencias.</p>' : ''}
+                        </div>
+                    </div>
+
+                </div>`;
+            },
+
+            // ==========================================
+            // VISTAS STANDARD (ACTUALIZADAS)
+            // ==========================================
+
             renderDashboard: function(c) {
-                // Cálculos rápidos
                 const today = new Date().toLocaleDateString('es-ES', {weekday: 'long'});
                 const incidentCount = this.data.behavior.filter(b => new Date(b.date).toDateString() === new Date().toDateString()).length;
-                const failingStudents = this.getFailingStudentsCount();
-
+                
                 c.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-in">
                     <div class="card p-6 border-l-4 border-blue-500">
@@ -240,28 +345,22 @@
                         <div class="mt-4 flex justify-between text-center">
                             <div><div class="text-2xl font-bold">${this.data.students.length}</div><div class="text-xs text-gray-400">Alumnos</div></div>
                             <div><div class="text-2xl font-bold text-red-500">${incidentCount}</div><div class="text-xs text-gray-400">Incidencias</div></div>
-                            <div><div class="text-2xl font-bold text-orange-500">${failingStudents}</div><div class="text-xs text-gray-400">En Riesgo</div></div>
                         </div>
                     </div>
-
                     <div class="card p-6">
                         <h3 class="font-bold text-gray-700 mb-4">Acciones Rápidas</h3>
                         <div class="grid grid-cols-2 gap-2">
-                            <button onclick="app.nav('grades')" class="bg-blue-50 p-2 rounded text-blue-600 hover:bg-blue-100"><i class="fa-solid fa-pen"></i> Calificar</button>
+                            <button onclick="app.nav('classes')" class="bg-indigo-50 p-2 rounded text-indigo-600 hover:bg-indigo-100"><i class="fa-solid fa-chalkboard"></i> Mis Clases</button>
                             <button onclick="app.nav('behavior')" class="bg-yellow-50 p-2 rounded text-yellow-600 hover:bg-yellow-100"><i class="fa-solid fa-triangle-exclamation"></i> Incidencia</button>
                             <button onclick="app.nav('students')" class="bg-green-50 p-2 rounded text-green-600 hover:bg-green-100"><i class="fa-solid fa-star"></i> Puntos</button>
                             <button onclick="app.addAlert()" class="bg-gray-50 p-2 rounded text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-note-sticky"></i> Nota</button>
                         </div>
                     </div>
-
-                    <div class="card p-6 overflow-hidden">
-                        <h3 class="font-bold text-gray-700 mb-2">Tu Agenda Hoy</h3>
-                        <div id="dashboard-agenda" class="space-y-2 text-sm max-h-40 overflow-y-auto">
-                            ${this.getTodaysAgendaHTML()}
-                        </div>
+                    <div class="card p-6">
+                        <h3 class="font-bold text-gray-700 mb-2">Agenda Hoy</h3>
+                        <div class="space-y-2 text-sm max-h-40 overflow-y-auto">${this.getTodaysAgendaHTML()}</div>
                     </div>
                 </div>
-
                 <div class="mt-8">
                     <h3 class="font-bold text-xl mb-4">Notas & Recordatorios</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -271,17 +370,13 @@
                                 <p class="font-handwriting">${a.text}</p>
                             </div>
                         `).join('')}
-                        <button onclick="app.addAlert()" class="border-2 border-dashed border-gray-300 rounded p-4 flex items-center justify-center text-gray-400 hover:border-blue-500 hover:text-blue-500">
-                            + Nueva Nota
-                        </button>
+                        <button onclick="app.addAlert()" class="border-2 border-dashed border-gray-300 rounded p-4 flex items-center justify-center text-gray-400 hover:border-blue-500">+ Nota</button>
                     </div>
                 </div>`;
             },
 
-            // --- B. HORARIO (SCHEDULE) ---
             renderSchedule: function(c) {
                 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-                
                 c.innerHTML = `
                 <div class="flex justify-between mb-4">
                     <h3 class="font-bold text-xl">Horario Semanal</h3>
@@ -291,9 +386,7 @@
                     ${days.map(day => `
                         <div class="bg-white rounded-lg shadow overflow-hidden">
                             <div class="bg-gray-100 p-2 text-center font-bold border-b">${day}</div>
-                            <div class="p-2 space-y-2 min-h-[200px]">
-                                ${this.getScheduleBlocks(day)}
-                            </div>
+                            <div class="p-2 space-y-2 min-h-[200px]">${this.getScheduleBlocks(day)}</div>
                         </div>
                     `).join('')}
                 </div>`;
@@ -302,666 +395,248 @@
             getScheduleBlocks: function(day) {
                 const blocks = this.data.schedule.blocks.filter(b => b.day === day).sort((a,b) => a.start.localeCompare(b.start));
                 if(blocks.length === 0) return '<div class="text-xs text-gray-400 text-center py-4">Libre</div>';
-                
                 return blocks.map(b => {
                     const subj = this.data.subjects.find(s => s.id === b.subjectId) || {name: '?', color: 'gray'};
                     return `
                     <div onclick="app.openLinkedPlan('${b.subjectId}')" class="p-2 rounded border-l-4 text-xs cursor-pointer hover:brightness-95 transition bg-${subj.color}-100 border-${subj.color}-500">
-                        <div class="font-bold flex justify-between">
-                            <span>${b.start} - ${b.end}</span>
-                        </div>
+                        <div class="font-bold flex justify-between"><span>${b.start} - ${b.end}</span></div>
                         <div class="mt-1 text-sm font-semibold">${subj.name}</div>
                     </div>`;
                 }).join('');
             },
 
-            // --- C. PLANIFICACIÓN (PLANNER) ---
             renderPlanner: function(c) {
-                // Tabs por materia
                 const tabs = this.data.subjects.map(s => `<button onclick="app.renderPlannerList('${s.id}')" class="px-4 py-2 bg-white rounded-t-lg mr-1 border hover:bg-gray-50 focus:bg-blue-50 focus:border-blue-500 tab-btn" data-id="${s.id}">${s.name}</button>`).join('');
-                
-                c.innerHTML = `
-                <div class="flex border-b mb-4 overflow-x-auto">${tabs}</div>
-                <div id="planner-content" class="bg-white p-6 rounded-b-lg shadow min-h-[400px]">
-                    <p class="text-gray-500 text-center mt-10">Selecciona una materia arriba para ver su planificación.</p>
-                </div>`;
-                
-                // Abrir la primera materia por defecto
+                c.innerHTML = `<div class="flex border-b mb-4 overflow-x-auto">${tabs}</div><div id="planner-content" class="bg-white p-6 rounded-b-lg shadow min-h-[400px]"><p class="text-gray-500 text-center mt-10">Selecciona materia.</p></div>`;
                 if(this.data.subjects.length > 0) this.renderPlannerList(this.data.subjects[0].id);
             },
 
             renderPlannerList: function(subId) {
-                const container = document.getElementById('planner-content');
-                // Estilar tabs
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-blue-50', 'border-blue-500'));
                 document.querySelector(`.tab-btn[data-id="${subId}"]`)?.classList.add('bg-blue-50', 'border-blue-500');
-
                 const plans = this.data.planning.filter(p => p.subjectId === subId).sort((a,b) => new Date(b.date) - new Date(a.date));
-
-                container.innerHTML = `
-                <div class="flex justify-between mb-4">
-                    <h4 class="font-bold">Planes de Clase</h4>
-                    <button onclick="app.addPlan('${subId}')" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">+ Nueva Clase</button>
-                </div>
-                <div class="space-y-4">
-                    ${plans.map(p => `
-                        <div class="border rounded-lg p-4 hover:shadow-md transition bg-gray-50">
-                            <div class="flex justify-between border-b pb-2 mb-2">
-                                <span class="font-bold text-lg text-blue-600">${p.topic}</span>
-                                <span class="text-sm text-gray-500">${p.date}</span>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                <div><span class="font-bold block text-gray-400 uppercase text-xs">Objetivos</span>${p.objectives || '-'}</div>
-                                <div><span class="font-bold block text-gray-400 uppercase text-xs">Actividades</span>${p.activities || '-'}</div>
-                                <div><span class="font-bold block text-gray-400 uppercase text-xs">Recursos/Tarea</span>${p.resources || '-'}</div>
-                            </div>
-                            <div class="mt-2 text-right">
-                                <button onclick="app.delPlan('${p.id}', '${subId}')" class="text-red-400 hover:text-red-600 text-xs"><i class="fa-solid fa-trash"></i> Eliminar</button>
-                            </div>
-                        </div>
-                    `).join('')}
-                    ${plans.length === 0 ? '<p class="text-center text-gray-400 py-10">No hay clases planificadas.</p>' : ''}
-                </div>`;
+                document.getElementById('planner-content').innerHTML = `
+                <div class="flex justify-between mb-4"><h4 class="font-bold">Planes de Clase</h4><button onclick="app.addPlan('${subId}')" class="bg-blue-600 text-white px-3 py-1 rounded">+ Nueva Clase</button></div>
+                <div class="space-y-4">${plans.map(p => `
+                    <div class="border rounded-lg p-4 hover:shadow-md transition bg-gray-50">
+                        <div class="flex justify-between border-b pb-2 mb-2"><span class="font-bold text-lg text-blue-600">${p.topic}</span><span class="text-sm text-gray-500">${p.date}</span></div>
+                        <div class="text-sm"><strong>Obj:</strong> ${p.objectives}</div>
+                        <div class="mt-2 text-right"><button onclick="app.delPlan('${p.id}','${subId}')" class="text-red-400 text-xs">Eliminar</button></div>
+                    </div>`).join('')}</div>`;
             },
 
-            // --- D. GRADEBOOK (NOTAS) ---
             renderGrades: function(c) {
-                // Selector de materia
-                if(this.data.subjects.length === 0) return c.innerHTML = '<p class="text-center p-10">Agrega materias en Ajustes primero.</p>';
-                
-                const currentSubId = this.data.subjects[0].id; // Simplificado: empieza con la primera
-                const students = this.data.students.filter(s => s.subjectId === currentSubId);
-
-                c.innerHTML = `
-                <div class="bg-white p-4 rounded shadow mb-4 flex gap-4 items-center">
-                    <label>Materia:</label>
-                    <select id="grade-subject-sel" class="border p-2 rounded" onchange="app.renderGradesTable(this.value)">
-                        ${this.data.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
-                    </select>
-                </div>
-                <div id="grades-table-container" class="bg-white rounded shadow overflow-x-auto">
-                    </div>`;
-                
-                this.renderGradesTable(currentSubId);
+                if(this.data.subjects.length === 0) return c.innerHTML = '<p class="text-center p-10">Agrega materias.</p>';
+                c.innerHTML = `<div class="bg-white p-4 rounded shadow mb-4 flex gap-4 items-center"><label>Materia:</label><select id="grade-subject-sel" class="border p-2 rounded" onchange="app.renderGradesTable(this.value)">${this.data.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select></div><div id="grades-table-container" class="bg-white rounded shadow overflow-x-auto"></div>`;
+                this.renderGradesTable(this.data.subjects[0].id);
             },
 
             renderGradesTable: function(subId) {
                 const students = this.data.students.filter(s => s.subjectId === subId);
-                const container = document.getElementById('grades-table-container');
-
-                container.innerHTML = `
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-800 text-white">
-                        <tr>
-                            <th class="p-3">Alumno</th>
-                            <th class="p-3 text-center w-24">P1</th>
-                            <th class="p-3 text-center w-24">P2</th>
-                            <th class="p-3 text-center w-24">P3</th>
-                            <th class="p-3 text-center w-24 font-bold bg-gray-900">Final</th>
-                            <th class="p-3 text-center">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${students.map(s => {
-                            const p1 = this.calcAvg(s.id, 1);
-                            const p2 = this.calcAvg(s.id, 2);
-                            const p3 = this.calcAvg(s.id, 3);
-                            const final = ((parseFloat(p1)||0) + (parseFloat(p2)||0) + (parseFloat(p3)||0)) / 3;
-                            
-                            return `<tr class="border-b hover:bg-gray-50">
-                                <td class="p-3 font-medium">${s.name}</td>
-                                <td class="p-3 text-center ${this.scoreColor(p1)}">${p1 || '-'}</td>
-                                <td class="p-3 text-center ${this.scoreColor(p2)}">${p2 || '-'}</td>
-                                <td class="p-3 text-center ${this.scoreColor(p3)}">${p3 || '-'}</td>
-                                <td class="p-3 text-center font-bold ${this.scoreColor(final.toFixed(1))}">${final > 0 ? final.toFixed(1) : '-'}</td>
-                                <td class="p-3 text-center">
-                                    <button onclick="app.addGrade('${s.id}')" class="text-blue-500 hover:bg-blue-100 p-1 rounded"><i class="fa-solid fa-plus-circle"></i> Nota</button>
-                                </td>
-                            </tr>`;
-                        }).join('')}
-                    </tbody>
-                </table>`;
+                document.getElementById('grades-table-container').innerHTML = `
+                <table class="w-full text-left text-sm"><thead class="bg-gray-800 text-white"><tr><th class="p-3">Alumno</th><th class="p-3 text-center w-24">P1</th><th class="p-3 text-center w-24">P2</th><th class="p-3 text-center w-24">P3</th><th class="p-3 text-center w-24 bg-gray-900">Final</th><th class="p-3 text-center">Acción</th></tr></thead>
+                <tbody>${students.map(s => {
+                    const p1 = this.calcAvg(s.id, 1), p2 = this.calcAvg(s.id, 2), p3 = this.calcAvg(s.id, 3);
+                    const final = ((parseFloat(p1)||0) + (parseFloat(p2)||0) + (parseFloat(p3)||0)) / 3;
+                    return `<tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium">${s.name}</td><td class="p-3 text-center ${this.scoreColor(p1)}">${p1||'-'}</td><td class="p-3 text-center ${this.scoreColor(p2)}">${p2||'-'}</td><td class="p-3 text-center ${this.scoreColor(p3)}">${p3||'-'}</td><td class="p-3 text-center font-bold ${this.scoreColor(final.toFixed(1))}">${final>0?final.toFixed(1):'-'}</td><td class="p-3 text-center"><button onclick="app.addGrade('${s.id}')" class="text-blue-500 hover:bg-blue-100 p-1 rounded">Nota</button></td></tr>`;
+                }).join('')}</tbody></table>`;
             },
 
-            // --- E. ANECDOTARIO (BEHAVIOR) ---
             renderBehavior: function(c) {
                 c.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 h-full">
                     <div class="bg-white p-4 rounded shadow h-full overflow-y-auto col-span-1">
-                        <button onclick="app.renderBehaviorDetail('GLOBAL')" class="w-full text-left p-3 rounded mb-2 font-bold bg-gray-100 hover:bg-gray-200">🌍 Incidencia Global</button>
-                        ${this.data.students.map(s => `
-                            <button onclick="app.renderBehaviorDetail('${s.id}')" class="w-full text-left p-2 rounded hover:bg-blue-50 text-sm flex justify-between items-center border-b">
-                                ${s.name}
-                                <span class="bg-gray-200 text-xs px-2 rounded-full">${this.countIncidents(s.id)}</span>
-                            </button>
-                        `).join('')}
+                        <button onclick="app.renderBehaviorDetail('GLOBAL')" class="w-full text-left p-3 rounded mb-2 font-bold bg-gray-100">🌍 Incidencia Global</button>
+                        ${this.data.students.map(s => `<button onclick="app.renderBehaviorDetail('${s.id}')" class="w-full text-left p-2 rounded hover:bg-blue-50 text-sm border-b">${s.name}</button>`).join('')}
                     </div>
-                    <div id="behavior-detail" class="col-span-3 bg-white p-6 rounded shadow overflow-y-auto">
-                        <p class="text-center text-gray-400 mt-20">Selecciona un alumno o Global para ver incidencias.</p>
-                    </div>
+                    <div id="behavior-detail" class="col-span-3 bg-white p-6 rounded shadow overflow-y-auto"><p class="text-center text-gray-400 mt-20">Selecciona alumno.</p></div>
                 </div>`;
             },
 
             renderBehaviorDetail: function(targetId) {
                 const isGlobal = targetId === 'GLOBAL';
-                const container = document.getElementById('behavior-detail');
-                
-                // Filtrar incidencias
-                let incidents = [];
-                if(isGlobal) {
-                    incidents = this.data.behavior.filter(b => b.studentId === 'GLOBAL');
-                } else {
-                    incidents = this.data.behavior.filter(b => b.studentId === targetId);
-                }
-                
-                // Header
-                container.innerHTML = `
-                <div class="flex justify-between items-center mb-6 border-b pb-4">
-                    <h3 class="font-bold text-xl">${isGlobal ? 'Registro de Clase (Global)' : this.data.students.find(s=>s.id===targetId)?.name}</h3>
-                    <button onclick="app.addBehavior('${targetId}')" class="bg-primary text-white px-4 py-2 rounded hover:bg-blue-700 shadow">+ Nueva Incidencia</button>
-                </div>
-                
-                <div class="space-y-6 relative border-l-2 border-gray-200 ml-4 pl-6">
-                    ${incidents.length === 0 ? '<p class="text-gray-400 italic">Sin registros.</p>' : ''}
-                    ${incidents.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(inc => `
-                        <div class="relative mb-6">
-                            <span class="absolute -left-9 top-1 w-5 h-5 rounded-full border-2 border-white shadow ${
-                                inc.severity === 'red' ? 'bg-red-500' : inc.severity === 'yellow' ? 'bg-yellow-400' : 'bg-green-500'
-                            }"></span>
-                            
-                            <div class="bg-gray-50 p-4 rounded-lg shadow-sm border">
-                                <div class="flex justify-between text-xs text-gray-500 mb-1">
-                                    <span>${inc.date}</span>
-                                    <span>${this.getSubjectName(inc.subjectId)}</span>
-                                </div>
-                                <div class="flex gap-2 mb-2">
-                                    ${inc.tags.map(t => `<span class="bg-white border px-2 py-0.5 rounded text-xs font-mono text-gray-600">${t}</span>`).join('')}
-                                </div>
-                                <p class="text-gray-800">${inc.desc}</p>
-                            </div>
-                        </div>
-                    `).join('')}
+                const incidents = isGlobal ? this.data.behavior.filter(b => b.studentId === 'GLOBAL') : this.data.behavior.filter(b => b.studentId === targetId);
+                document.getElementById('behavior-detail').innerHTML = `
+                <div class="flex justify-between items-center mb-6 border-b pb-4"><h3 class="font-bold text-xl">${isGlobal ? 'Global' : this.getStudentName(targetId)}</h3><button onclick="app.addBehavior('${targetId}')" class="bg-primary text-white px-4 py-2 rounded">+ Nueva Incidencia</button></div>
+                <div class="space-y-6 ml-4 pl-6 border-l-2 border-gray-200">${incidents.map(inc => `
+                    <div class="relative mb-6"><span class="absolute -left-9 top-1 w-5 h-5 rounded-full border-2 border-white shadow ${inc.severity==='red'?'bg-red-500':inc.severity==='yellow'?'bg-yellow-400':'bg-green-500'}"></span>
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-sm border"><div class="flex justify-between text-xs text-gray-500"><span>${inc.date}</span><span>${this.getSubjectName(inc.subjectId)}</span></div><div class="flex gap-2 my-2">${inc.tags.map(t => `<span class="bg-white border px-1 rounded text-xs">${t}</span>`).join('')}</div><p>${inc.desc}</p></div></div>`).join('')}
                 </div>`;
             },
 
-            // --- F. GESTIÓN ALUMNOS & RECOMPENSAS ---
             renderStudents: function(c) {
                 c.innerHTML = `
                 <div class="bg-white p-6 rounded shadow mb-6">
-                    <div class="flex justify-between mb-4">
-                        <h3 class="font-bold">Alumnos y Gamificación</h3>
-                        <div class="flex gap-2">
-                             <button onclick="app.addStudent()" class="bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300">Crear Alumno</button>
-                             <button onclick="app.rewardBankConfig()" class="bg-purple-100 text-purple-700 px-3 py-1 rounded text-sm hover:bg-purple-200"><i class="fa-solid fa-gift"></i> Configurar Banco</button>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        ${this.data.students.map(s => `
-                            <div class="card p-4 text-center relative group">
-                                <div class="font-bold text-lg">${s.name}</div>
-                                <div class="text-xs text-gray-400 mb-2">${this.getSubjectName(s.subjectId)}</div>
-                                
-                                <div class="flex justify-center gap-4 text-sm font-mono my-2">
-                                    <div class="text-blue-600" title="Nivel XP"><i class="fa-solid fa-bolt"></i> ${s.xp || 0}</div>
-                                    <div class="text-green-600" title="Monedero"><i class="fa-solid fa-coins"></i> ${s.wallet || 0}</div>
-                                </div>
-
-                                <div class="mt-2 grid grid-cols-2 gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onclick="app.giveReward('${s.id}')" class="bg-green-500 text-white rounded py-1 text-xs hover:bg-green-600">Premiar</button>
-                                    <button onclick="app.redeem('${s.id}')" class="bg-orange-500 text-white rounded py-1 text-xs hover:bg-orange-600">Canjear</button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded shadow">
-                    <h4 class="font-bold mb-2">Historial de Transacciones</h4>
-                    <div class="max-h-60 overflow-y-auto text-sm">
-                        <table class="w-full text-left">
-                            <thead class="text-gray-400 text-xs uppercase bg-gray-50"><tr><th class="p-2">Fecha</th><th>Alumno</th><th>Razón</th><th class="text-right">Valor</th></tr></thead>
-                            <tbody>
-                                ${this.data.rewardsLog.sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,50).map(l => `
-                                    <tr class="border-b">
-                                        <td class="p-2 text-gray-500 text-xs">${new Date(l.date).toLocaleDateString()}</td>
-                                        <td>${this.getStudentName(l.studentId)}</td>
-                                        <td>${l.reason}</td>
-                                        <td class="text-right font-mono ${l.amount > 0 ? 'text-green-600' : 'text-red-600'}">${l.amount > 0 ? '+' : ''}${l.amount}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
+                    <div class="flex justify-between mb-4"><h3 class="font-bold">Todos los Alumnos</h3><div class="flex gap-2"><button onclick="app.addStudent()" class="bg-gray-200 px-3 py-1 rounded text-sm">Crear Alumno</button></div></div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">${this.data.students.map(s => `
+                        <div class="card p-4 text-center group"><div class="font-bold">${s.name}</div><div class="text-xs text-gray-400 mb-2">${this.getSubjectName(s.subjectId)}</div><div class="flex justify-center gap-4 text-sm font-mono my-2"><div class="text-blue-600">XP: ${s.xp||0}</div><div class="text-green-600">$${s.wallet||0}</div></div><div class="opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="app.giveReward('${s.id}')" class="bg-green-500 text-white rounded py-1 px-2 text-xs">Premiar</button> <button onclick="app.redeem('${s.id}')" class="bg-orange-500 text-white rounded py-1 px-2 text-xs">Canjear</button></div></div>
+                    `).join('')}</div>
                 </div>`;
             },
 
-            // --- G. AJUSTES ---
             renderSettings: function(c) {
                 c.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid md:grid-cols-2 gap-6">
                     <div class="bg-white p-6 rounded shadow">
-                        <h3 class="font-bold border-b pb-2 mb-4">Perfil Docente</h3>
-                        <div class="space-y-3">
-                            <input id="set-name" class="w-full border p-2 rounded" placeholder="Nombre" value="${this.data.profile.name}">
-                            <input id="set-school" class="w-full border p-2 rounded" placeholder="Colegio" value="${this.data.profile.school}">
-                            <button onclick="app.saveProfile()" class="bg-primary text-white px-4 py-2 rounded w-full">Guardar Perfil</button>
-                        </div>
+                        <h3 class="font-bold border-b pb-2 mb-4">Perfil</h3>
+                        <input id="set-name" class="w-full border p-2 rounded mb-2" value="${this.data.profile.name}">
+                        <button onclick="app.saveProfile()" class="bg-primary text-white px-4 py-2 rounded w-full">Guardar</button>
                     </div>
-
                     <div class="bg-white p-6 rounded shadow">
-                        <h3 class="font-bold border-b pb-2 mb-4">Materias</h3>
-                        <ul class="mb-4 space-y-2">
-                            ${this.data.subjects.map(s => `<li class="flex justify-between items-center bg-gray-50 p-2 rounded"><span class="text-${s.color}-600 font-bold">${s.name}</span> <button onclick="app.delSubject('${s.id}')" class="text-red-400">x</button></li>`).join('')}
-                        </ul>
-                        <button onclick="app.addSubject()" class="border border-dashed border-gray-300 w-full p-2 text-gray-400 rounded hover:border-blue-500 hover:text-blue-500">+ Agregar Materia</button>
-                    </div>
-
-                    <div class="bg-white p-6 rounded shadow md:col-span-2">
-                        <h3 class="font-bold border-b pb-2 mb-4">Sistema & Datos</h3>
-                        <div class="flex gap-4 flex-wrap">
-                            <button onclick="app.setPin()" class="bg-gray-700 text-white px-4 py-2 rounded"><i class="fa-solid fa-lock"></i> Configurar PIN</button>
-                            <button onclick="app.exportExcel()" class="bg-green-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-file-excel"></i> Exportar Excel</button>
-                            <button onclick="window.print()" class="bg-gray-500 text-white px-4 py-2 rounded"><i class="fa-solid fa-print"></i> Imprimir Reporte</button>
-                            <button onclick="app.deleteEverything()" class="bg-red-100 text-red-600 px-4 py-2 rounded ml-auto">Borrar Todo</button>
-                        </div>
+                        <h3 class="font-bold border-b pb-2 mb-4">Materias Globales</h3>
+                        <ul class="mb-4 space-y-2">${this.data.subjects.map(s => `<li class="flex justify-between bg-gray-50 p-2 rounded"><span class="text-${s.color}-600 font-bold">${s.name}</span><button onclick="app.delSubject('${s.id}')" class="text-red-400">x</button></li>`).join('')}</ul>
+                        <button onclick="app.addSubject()" class="border border-dashed w-full p-2 text-gray-400 rounded hover:border-blue-500">+ Materia</button>
                     </div>
                 </div>`;
             },
 
             // ==========================================
-            // 4. LÓGICA Y MODALES (SweetAlert)
+            // LOGICA / ACTIONS
             // ==========================================
 
-            // --- PLANNER LINKED ---
-            openLinkedPlan: async function(subjectId) {
-                // Busca plan de hoy, si no, el último
-                const todayStr = new Date().toISOString().split('T')[0];
-                let plan = this.data.planning.find(p => p.subjectId === subjectId && p.date === todayStr);
+            addStudent: async function(preselectedSubjectId = null) {
+                if(this.data.subjects.length === 0) return Swal.fire('Alto', 'Primero crea una materia en Ajustes.', 'warning');
                 
-                if(!plan) {
-                    const result = await Swal.fire({
-                        title: 'Sin plan para hoy',
-                        text: '¿Quieres ver el último plan registrado o crear uno nuevo para hoy?',
-                        showCancelButton: true,
-                        confirmButtonText: 'Crear Nuevo',
-                        cancelButtonText: 'Ver Último'
+                const { value: name } = await Swal.fire({input: 'text', title: 'Nombre del Alumno'});
+                if(!name) return;
+
+                let subId = preselectedSubjectId;
+                
+                // Si no hay materia preseleccionada (venimos de vista general), preguntar:
+                if(!subId) {
+                    const options = {};
+                    this.data.subjects.forEach(s => options[s.id] = s.name);
+                    const { value: selected } = await Swal.fire({
+                        title: 'Asignar a Clase',
+                        input: 'select',
+                        inputOptions: options,
+                        showCancelButton: true
                     });
-                    
-                    if(result.isConfirmed) {
-                        this.nav('planner');
-                        setTimeout(() => this.renderPlannerList(subjectId), 100);
-                        return;
-                    } else {
-                        // Buscar el último
-                         plan = this.data.planning.filter(p => p.subjectId === subjectId).sort((a,b) => new Date(b.date) - new Date(a.date))[0];
-                         if(!plan) return Swal.fire('Nada encontrado', 'No hay planes previos.', 'info');
-                    }
+                    if(selected) subId = selected;
                 }
 
-                Swal.fire({
-                    title: `Plan: ${plan.topic}`,
-                    html: `
-                        <div class="text-left bg-gray-50 p-4 rounded text-sm">
-                            <p><strong>Fecha:</strong> ${plan.date}</p>
-                            <p class="mt-2"><strong>Objetivos:</strong><br>${plan.objectives}</p>
-                            <p class="mt-2"><strong>Actividad:</strong><br>${plan.activities}</p>
-                        </div>
-                    `,
-                    width: '600px'
-                });
+                if(subId) {
+                    this.data.students.push({ id: 'st-'+Date.now(), name, subjectId: subId, xp: 0, wallet: 0 });
+                    this.saveData();
+                    // Si estábamos en detalle de clase, recargar esa vista, si no, ir a lista general
+                    if(preselectedSubjectId) this.renderClassDetail(document.getElementById('view-container'), preselectedSubjectId);
+                    else this.nav('students');
+                }
+            },
+
+            openLinkedPlan: async function(subjectId) {
+                const todayStr = new Date().toISOString().split('T')[0];
+                let plan = this.data.planning.find(p => p.subjectId === subjectId && p.date === todayStr);
+                if(!plan) {
+                    const r = await Swal.fire({title: 'Sin plan hoy', text: '¿Crear uno nuevo?', showCancelButton: true, confirmButtonText: 'Crear'});
+                    if(r.isConfirmed) { this.nav('classDetail', subjectId); } 
+                    return;
+                }
+                Swal.fire({title: plan.topic, html: `<div class="text-left bg-gray-50 p-4 rounded text-sm"><p><strong>Obj:</strong> ${plan.objectives}</p><p><strong>Act:</strong> ${plan.activities}</p></div>`});
             },
 
             addPlan: async function(subId) {
                 const { value: form } = await Swal.fire({
-                    title: 'Planificar Clase',
-                    width: '700px',
-                    html: `
-                        <input id="sw-topic" class="swal2-input" placeholder="Tema Principal">
-                        <input id="sw-date" type="date" class="swal2-input" value="${new Date().toISOString().split('T')[0]}">
-                        <textarea id="sw-obj" class="swal2-textarea" placeholder="Objetivos de aprendizaje"></textarea>
-                        <textarea id="sw-act" class="swal2-textarea" placeholder="Actividades detalladas"></textarea>
-                        <textarea id="sw-res" class="swal2-textarea" placeholder="Recursos y Tareas"></textarea>
-                    `,
+                    title: 'Planificar',
+                    html: `<input id="sw-topic" class="swal2-input" placeholder="Tema"><input id="sw-date" type="date" class="swal2-input" value="${new Date().toISOString().split('T')[0]}"><textarea id="sw-obj" class="swal2-textarea" placeholder="Objetivos"></textarea><textarea id="sw-act" class="swal2-textarea" placeholder="Actividades"></textarea>`,
                     focusConfirm: false,
-                    preConfirm: () => {
-                        return {
-                            topic: document.getElementById('sw-topic').value,
-                            date: document.getElementById('sw-date').value,
-                            objectives: document.getElementById('sw-obj').value,
-                            activities: document.getElementById('sw-act').value,
-                            resources: document.getElementById('sw-res').value
-                        }
-                    }
+                    preConfirm: () => ({ topic: document.getElementById('sw-topic').value, date: document.getElementById('sw-date').value, objectives: document.getElementById('sw-obj').value, activities: document.getElementById('sw-act').value })
                 });
-
                 if(form && form.topic) {
                     this.data.planning.push({ id: Date.now(), subjectId: subId, ...form });
                     this.saveData();
-                    this.renderPlannerList(subId);
+                    // Recargar vista dependiendo donde estemos
+                    if(this.currentView === 'classDetail') this.renderClassDetail(document.getElementById('view-container'), subId);
+                    else this.renderPlannerList(subId);
                 }
             },
 
-            // --- GRADES ---
-            addGrade: async function(studentId) {
-                const { value: form } = await Swal.fire({
-                    title: 'Registrar Nota',
-                    html: `
-                        <select id="sw-period" class="swal2-input">
-                            <option value="1">Periodo 1</option>
-                            <option value="2">Periodo 2</option>
-                            <option value="3">Periodo 3</option>
-                        </select>
-                        <input id="sw-val" type="number" step="0.1" max="5" class="swal2-input" placeholder="Nota (1.0 - 5.0)">
-                        <input id="sw-desc" class="swal2-input" placeholder="Descripción (Ej: Examen)">
-                    `,
-                    preConfirm: () => [document.getElementById('sw-period').value, document.getElementById('sw-val').value, document.getElementById('sw-desc').value]
+            giveReward: async function(sId) {
+                const presetsHtml = this.data.rewardPresets.map((p, idx) => `<button onclick="app.applyPreset('${sId}', ${idx})" class="m-1 p-2 border rounded hover:bg-blue-50">${p.icon} ${p.label}</button>`).join('');
+                Swal.fire({
+                    title: 'Asignar XP', html: `<div class="mb-4">${presetsHtml}</div><hr class="my-2"><input id="sw-pts" type="number" class="swal2-input" placeholder="Manual (+/-)"><input id="sw-rsn" class="swal2-input" placeholder="Razón">`,
+                    showCancelButton: true, confirmButtonText: 'Guardar',
+                    preConfirm: () => { const v = document.getElementById('sw-pts').value; if(v) this.processReward(sId, parseInt(v), document.getElementById('sw-rsn').value); }
                 });
-                if(form && form[1]) {
-                    this.data.grades.push({
-                        studentId, 
-                        period: parseInt(form[0]), 
-                        value: parseFloat(form[1]), 
-                        desc: form[2],
-                        date: new Date().toISOString()
-                    });
+            },
+            applyPreset: function(sId, pIdx) { const p = this.data.rewardPresets[pIdx]; this.processReward(sId, p.val, p.label); Swal.close(); },
+            processReward: function(sId, amount, reason) {
+                const s = this.data.students.find(st => st.id === sId);
+                if(s) {
+                    if(amount > 0) s.xp = (s.xp||0) + amount;
+                    s.wallet = (s.wallet||0) + amount;
+                    this.data.rewardsLog.push({ studentId: sId, amount, reason, date: new Date().toISOString() });
                     this.saveData();
-                    this.renderGrades(document.getElementById('view-container'));
+                    // Actualización inteligente de UI
+                    if(this.currentView === 'classDetail') this.renderClassDetail(document.getElementById('view-container'), s.subjectId);
+                    else this.renderStudents(document.getElementById('view-container'));
+                    Swal.fire('Listo', `${amount} pts.`, 'success');
                 }
             },
 
-            // --- BEHAVIOR ---
             addBehavior: async function(studentId) {
                 const { value: form } = await Swal.fire({
-                    title: 'Nueva Incidencia',
-                    html: `
-                        <select id="sw-sev" class="swal2-select">
-                            <option value="green">🟢 Leve / Positivo</option>
-                            <option value="yellow">🟡 Moderado</option>
-                            <option value="red">🔴 Grave</option>
-                        </select>
-                        <input id="sw-tag" class="swal2-input" placeholder="Etiquetas (ej: #conducta #respeto)">
-                        <textarea id="sw-desc" class="swal2-textarea" placeholder="Descripción del hecho"></textarea>
-                        <select id="sw-sub" class="swal2-input">
-                             ${this.data.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
-                        </select>
-                    `,
-                    preConfirm: () => ({
-                        severity: document.getElementById('sw-sev').value,
-                        tags: document.getElementById('sw-tag').value.split(' ').filter(t=>t),
-                        desc: document.getElementById('sw-desc').value,
-                        subjectId: document.getElementById('sw-sub').value
-                    })
+                    title: 'Incidencia',
+                    html: `<select id="sw-sev" class="swal2-select"><option value="green">🟢 Leve</option><option value="yellow">🟡 Moderado</option><option value="red">🔴 Grave</option></select><input id="sw-tag" class="swal2-input" placeholder="Etiquetas"><textarea id="sw-desc" class="swal2-textarea" placeholder="Descripción"></textarea><select id="sw-sub" class="swal2-input">${this.data.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select>`,
+                    preConfirm: () => ({ severity: document.getElementById('sw-sev').value, tags: document.getElementById('sw-tag').value.split(' '), desc: document.getElementById('sw-desc').value, subjectId: document.getElementById('sw-sub').value })
                 });
-
                 if(form && form.desc) {
-                    this.data.behavior.push({
-                        id: Date.now(),
-                        studentId: studentId,
-                        date: new Date().toISOString().split('T')[0],
-                        ...form
-                    });
+                    this.data.behavior.push({ id: Date.now(), studentId, date: new Date().toISOString().split('T')[0], ...form });
                     this.saveData();
-                    this.renderBehaviorDetail(studentId);
-                }
-            },
-
-            // --- REWARDS ---
-            giveReward: async function(sId) {
-                // Generar HTML de botones predefinidos
-                const presetsHtml = this.data.rewardPresets.map((p, idx) => 
-                    `<button onclick="app.applyPreset('${sId}', ${idx})" class="m-1 p-2 border rounded hover:bg-blue-50">${p.icon} ${p.label} (${p.val})</button>`
-                ).join('');
-
-                Swal.fire({
-                    title: 'Asignar XP / Puntos',
-                    html: `
-                        <div class="mb-4">${presetsHtml}</div>
-                        <hr class="my-2">
-                        <p class="text-sm text-gray-500 mb-2">O manual:</p>
-                        <input id="sw-pts" type="number" class="swal2-input" placeholder="Cantidad (+/-)">
-                        <input id="sw-rsn" class="swal2-input" placeholder="Razón">
-                    `,
-                    showCancelButton: true,
-                    confirmButtonText: 'Guardar Manual',
-                    preConfirm: () => {
-                        const val = document.getElementById('sw-pts').value;
-                        const rsn = document.getElementById('sw-rsn').value;
-                        if(val) this.processReward(sId, parseInt(val), rsn);
+                    if(this.currentView === 'classDetail') {
+                        // Si es global o del alumno en la vista actual, recargamos
+                         const s = this.data.students.find(st => st.id === studentId);
+                         if(studentId === 'GLOBAL' || s) this.renderClassDetail(document.getElementById('view-container'), form.subjectId);
+                    } else {
+                        this.renderBehaviorDetail(studentId);
                     }
-                });
+                }
             },
 
-            applyPreset: function(sId, pIdx) {
-                const p = this.data.rewardPresets[pIdx];
-                this.processReward(sId, p.val, p.label);
-                Swal.close();
-            },
-
-            processReward: function(sId, amount, reason) {
-                const student = this.data.students.find(s => s.id === sId);
-                if(student) {
-                    // XP siempre suma si es positivo (no baja si gastas)
-                    if(amount > 0) student.xp = (student.xp || 0) + amount;
-                    // Wallet sube o baja
-                    student.wallet = (student.wallet || 0) + amount;
-                    
-                    // Log
-                    this.data.rewardsLog.push({
-                        studentId: sId,
-                        amount: amount,
-                        reason: reason,
-                        date: new Date().toISOString()
-                    });
-                    
+            addGrade: async function(studentId) {
+                const { value: form } = await Swal.fire({ title: 'Nota', html: `<select id="sw-p" class="swal2-input"><option value="1">P1</option><option value="2">P2</option><option value="3">P3</option></select><input id="sw-v" type="number" step="0.1" class="swal2-input" placeholder="Nota">`, preConfirm: () => [document.getElementById('sw-p').value, document.getElementById('sw-v').value] });
+                if(form && form[1]) {
+                    this.data.grades.push({ studentId, period: parseInt(form[0]), value: parseFloat(form[1]), date: new Date().toISOString() });
                     this.saveData();
-                    this.renderStudents(document.getElementById('view-container'));
-                    Swal.fire('Listo', `${amount} puntos asignados.`, 'success');
+                    this.renderGradesTable(this.data.students.find(s=>s.id===studentId).subjectId);
                 }
             },
 
-            redeem: async function(sId) {
-                const student = this.data.students.find(s => s.id === sId);
-                const { value: cost } = await Swal.fire({
-                    title: 'Canjear Premio',
-                    text: `Saldo disponible: ${student.wallet}`,
-                    input: 'number',
-                    inputLabel: 'Costo del premio'
-                });
-                
-                if(cost) {
-                    if(student.wallet < cost) return Swal.fire('Error', 'Saldo insuficiente', 'error');
-                    
-                    student.wallet -= parseInt(cost);
-                    this.data.rewardsLog.push({
-                        studentId: sId,
-                        amount: -parseInt(cost),
-                        reason: "Canje de premio",
-                        date: new Date().toISOString()
-                    });
-                    this.saveData();
-                    this.renderStudents(document.getElementById('view-container'));
-                }
-            },
-
-            rewardBankConfig: async function() {
-                const presets = this.data.rewardPresets.map(p => `<li>${p.icon} ${p.label}: ${p.val}</li>`).join('');
-                Swal.fire({
-                    title: 'Configuración Banco',
-                    html: `
-                        <ul class="text-left mb-4 text-sm bg-gray-100 p-2 rounded">${presets}</ul>
-                        <p class="text-xs text-gray-500">Para editar, modifícalo directamente en el JSON exportado por ahora.</p>
-                    `
-                });
-            },
-
-            // --- HORARIO EDIT ---
-            editScheduleMode: async function() {
-                const { value: form } = await Swal.fire({
-                    title: 'Agregar Bloque',
-                    html: `
-                        <select id="sw-day" class="swal2-input">
-                            <option>Lunes</option><option>Martes</option><option>Miércoles</option><option>Jueves</option><option>Viernes</option>
-                        </select>
-                        <input id="sw-start" type="time" class="swal2-input">
-                        <input id="sw-end" type="time" class="swal2-input">
-                        <select id="sw-sub-sch" class="swal2-input">
-                             ${this.data.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
-                        </select>
-                    `,
-                    preConfirm: () => ({
-                        day: document.getElementById('sw-day').value,
-                        start: document.getElementById('sw-start').value,
-                        end: document.getElementById('sw-end').value,
-                        subjectId: document.getElementById('sw-sub-sch').value
-                    })
-                });
-
-                if(form && form.start) {
-                    this.data.schedule.blocks.push(form);
-                    this.saveData();
-                    this.renderSchedule(document.getElementById('view-container'));
-                }
-            },
-
-            // --- HELPERS Y UTILS ---
-            
-            togglePrivacy: function() {
-                document.getElementById('privacy-lock').classList.remove('hidden');
-                document.body.classList.add('blur-screen');
-            },
-
-            unlockApp: function() {
-                const input = document.getElementById('unlock-pin').value;
-                if(input === this.data.profile.pin) {
-                    document.getElementById('privacy-lock').classList.add('hidden');
-                    document.body.classList.remove('blur-screen');
-                    document.getElementById('unlock-pin').value = '';
-                } else {
-                    Swal.fire('Error', 'PIN Incorrecto', 'error');
-                }
-            },
-
-            setPin: async function() {
-                const { value: pin } = await Swal.fire({ title: 'Nuevo PIN (4 dígitos)', input: 'text', inputAttributes: {maxlength:4} });
-                if(pin) {
-                    this.data.profile.pin = pin;
-                    this.saveData();
-                    Swal.fire('Guardado', 'No olvides tu nuevo PIN', 'success');
-                }
-            },
-
+            // --- UTILS ---
+            togglePrivacy: function() { document.getElementById('privacy-lock').classList.remove('hidden'); document.body.classList.add('blur-screen'); },
+            unlockApp: function() { if(document.getElementById('unlock-pin').value === this.data.profile.pin) { document.getElementById('privacy-lock').classList.add('hidden'); document.body.classList.remove('blur-screen'); } else Swal.fire('Error', 'PIN Incorrecto', 'error'); },
             addSubject: async function() {
-                const { value: name } = await Swal.fire({input: 'text', title: 'Nombre de Materia'});
+                const { value: name } = await Swal.fire({input: 'text', title: 'Nombre Materia'});
                 if(name) {
                     const colors = ['blue', 'green', 'purple', 'orange', 'red', 'teal'];
-                    const color = colors[this.data.subjects.length % colors.length];
-                    this.data.subjects.push({ id: 's-'+Date.now(), name, color });
+                    this.data.subjects.push({ id: 's-'+Date.now(), name, color: colors[this.data.subjects.length % colors.length] });
                     this.saveData();
-                    this.renderSettings(document.getElementById('view-container'));
+                    if(this.currentView === 'classes') this.renderClasses(document.getElementById('view-container'));
+                    else this.renderSettings(document.getElementById('view-container'));
                 }
             },
-
-            addStudent: async function() {
-                const { value: name } = await Swal.fire({input: 'text', title: 'Nombre del Alumno'});
-                if(name) {
-                    // Por defecto asignamos a la primera materia, luego se puede gestionar mejor
-                    const subId = this.data.subjects[0]?.id; 
-                    if(!subId) return Swal.fire('Error', 'Crea materias primero', 'error');
-                    
-                    this.data.students.push({ id: 'st-'+Date.now(), name, subjectId: subId, xp: 0, wallet: 0 });
-                    this.saveData();
-                    this.renderStudents(document.getElementById('view-container'));
-                }
+            addAlert: async function() { const { value: text } = await Swal.fire({input: 'text', title: 'Nota'}); if(text) { this.data.alerts.push({ text, color: 'bg-yellow-100' }); this.saveData(); this.renderDashboard(document.getElementById('view-container')); } },
+            delAlert: function(i) { this.data.alerts.splice(i, 1); this.saveData(); this.renderDashboard(document.getElementById('view-container')); },
+            editScheduleMode: async function() {
+                 const { value: form } = await Swal.fire({ title: 'Bloque', html: `<select id="d" class="swal2-input"><option>Lunes</option><option>Martes</option><option>Miércoles</option><option>Jueves</option><option>Viernes</option></select><input id="s" type="time" class="swal2-input"><input id="e" type="time" class="swal2-input"><select id="sub" class="swal2-input">${this.data.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select>`, preConfirm: () => ({ day: document.getElementById('d').value, start: document.getElementById('s').value, end: document.getElementById('e').value, subjectId: document.getElementById('sub').value }) });
+                 if(form && form.start) { this.data.schedule.blocks.push(form); this.saveData(); this.renderSchedule(document.getElementById('view-container')); }
             },
-
-            addAlert: async function() {
-                const { value: text } = await Swal.fire({input: 'textarea', title: 'Nueva Nota'});
-                if(text) {
-                    this.data.alerts.push({ text, color: 'bg-yellow-100' });
-                    this.saveData();
-                    this.renderDashboard(document.getElementById('view-container'));
-                }
-            },
-
-            delAlert: function(idx) {
-                this.data.alerts.splice(idx, 1);
-                this.saveData();
-                this.renderDashboard(document.getElementById('view-container'));
-            },
-
-            exportExcel: function() {
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(this.data.students), "Alumnos");
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(this.data.grades), "Notas");
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(this.data.behavior), "Conducta");
-                XLSX.writeFile(wb, "TeacherData_Backup.xlsx");
-            },
-
-            saveProfile: function() {
-                this.data.profile.name = document.getElementById('set-name').value;
-                this.data.profile.school = document.getElementById('set-school').value;
-                this.saveData();
-                this.updateProfileUI();
-            },
-
-            updateProfileUI: function() {
-                document.getElementById('profile-name').innerText = this.data.profile.name;
-            },
-
-            // --- Lógica de Negocio Pura ---
-            calcAvg: function(sId, period) {
-                const grades = this.data.grades.filter(g => g.studentId === sId && g.period === period);
-                if(grades.length === 0) return '';
-                const sum = grades.reduce((a,b) => a + b.value, 0);
-                return (sum / grades.length).toFixed(1);
-            },
-
-            scoreColor: function(val) {
-                if(!val) return 'text-gray-400';
-                return parseFloat(val) < 3.0 ? 'text-red-600 font-bold' : 'text-gray-800';
-            },
-
-            getSubjectName: function(id) {
-                return this.data.subjects.find(s=>s.id===id)?.name || 'General';
-            },
-
-            getStudentName: function(id) {
-                return this.data.students.find(s=>s.id===id)?.name || 'Desconocido';
-            },
-
-            countIncidents: function(sId) {
-                return this.data.behavior.filter(b => b.studentId === sId).length;
-            },
-
-            getFailingStudentsCount: function() {
-                // Lógica simple: cuenta estudiantes con algun promedio < 3.0
-                let count = 0;
-                this.data.students.forEach(s => {
-                    const p1 = parseFloat(this.calcAvg(s.id, 1)) || 5;
-                    if(p1 < 3.0) count++;
-                });
-                return count;
-            },
-
+            saveProfile: function() { this.data.profile.name = document.getElementById('set-name').value; this.saveData(); this.updateProfileUI(); },
+            updateProfileUI: function() { document.getElementById('profile-name').innerText = this.data.profile.name; },
+            calcAvg: function(sId, p) { const g = this.data.grades.filter(x => x.studentId === sId && x.period === p); if(!g.length) return ''; return (g.reduce((a,b)=>a+b.value,0)/g.length).toFixed(1); },
+            scoreColor: function(v) { if(!v) return 'text-gray-400'; return parseFloat(v)<3.0?'text-red-600 font-bold':'text-gray-800'; },
+            getSubjectName: function(id) { return this.data.subjects.find(s=>s.id===id)?.name || 'General'; },
+            getStudentName: function(id) { return this.data.students.find(s=>s.id===id)?.name || 'Desconocido'; },
             getTodaysAgendaHTML: function() {
                 const days = ['Domingo','Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-                const todayName = days[new Date().getDay()];
-                const blocks = this.data.schedule.blocks.filter(b => b.day === todayName).sort((a,b)=>a.start.localeCompare(b.start));
-                
-                if(blocks.length === 0) return '<div class="text-gray-400 italic">No tienes clases hoy.</div>';
-                
-                return blocks.map(b => {
-                    const subj = this.data.subjects.find(s=>s.id===b.subjectId);
-                    return `<div class="flex justify-between border-b pb-1">
-                        <span>${b.start} - ${subj.name}</span>
-                        <button onclick="app.nav('planner')" class="text-blue-500 text-xs">Ver plan</button>
-                    </div>`;
-                }).join('');
+                const blocks = this.data.schedule.blocks.filter(b => b.day === days[new Date().getDay()]).sort((a,b)=>a.start.localeCompare(b.start));
+                if(blocks.length === 0) return '<div class="text-gray-400 italic">Libre hoy.</div>';
+                return blocks.map(b => `<div class="flex justify-between border-b pb-1"><span>${b.start} - ${this.getSubjectName(b.subjectId)}</span><button onclick="app.nav('classDetail', '${b.subjectId}')" class="text-blue-500 text-xs">Ir a clase</button></div>`).join('');
             }
         };
 
-        // ARRANCAR
         window.onload = () => App.init();
-        window.app = App; // Exponer globalmente
+        window.app = App;
     </script>
 </body>
 </html>
